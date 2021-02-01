@@ -71,6 +71,14 @@ def softmax(x):
     return (np.exp(x).T / np.sum(np.exp(x), axis = 1)).T
     raise NotImplementedError("Softmax not implemented")
 
+#Output layer gradient
+def softmax_gradient(x):
+    """
+    Done: Implement the softmax function here.
+    Remember to take care of the overflow condition.
+    """
+    # return (np.exp(x).T / np.sum(np.exp(x), axis = 1)).T
+    raise NotImplementedError("Softmax gradient not implemented")
 
 class Activation():
     """
@@ -85,7 +93,7 @@ class Activation():
 
     def __init__(self, activation_type = "sigmoid"):
         """
-        TODO: Initialize activation type and placeholders here.
+        Done: Initialize activation type and placeholders here.
         """
         if activation_type not in ["sigmoid", "tanh", "ReLU", "leakyReLU"]:
             raise NotImplementedError(f"{activation_type} is not implemented.")
@@ -94,6 +102,7 @@ class Activation():
         self.activation_type = activation_type
 
         # Placeholder for input. This will be used for computing gradients.
+        # self.x record the value for a_j
         self.x = None
 
     def __call__(self, a):
@@ -105,7 +114,10 @@ class Activation():
     def forward(self, a):
         """
         Compute the forward pass.
+        Input: a_i
+        Output: z_i
         """
+        self.x = a #(without extra bias term)
         if self.activation_type == "sigmoid":
             return self.sigmoid(a)
 
@@ -166,26 +178,39 @@ class Activation():
 
     def grad_sigmoid(self):
         """
-        TODO: Compute the gradient for sigmoid here.
+        Done: Compute the gradient for sigmoid here.
         """
+        tmp = self.sigmoid(self.x)
+        return np.multiply(tmp, 1 - tmp)
         raise NotImplementedError("Sigmoid gradient not implemented")
 
     def grad_tanh(self):
         """
-        TODO: Compute the gradient for tanh here.
+        Done: Compute the gradient for tanh here.
         """
+        tmp = 1 - np.tanh(self.x) ** 2
+        print(tmp)
+        return tmp
         raise NotImplementedError("tanh gradient not implemented")
 
     def grad_ReLU(self):
         """
-        TODO: Compute the gradient for ReLU here.
+        Done: Compute the gradient for ReLU here.
         """
+        tmp = self.x
+        tmp[np.where(tmp >= 0)] = 1
+        tmp[np.where(tmp < 0)] = 0
+        return tmp
         raise NotImplementedError("ReLU gradient not implemented")
 
     def grad_leakyReLU(self):
         """
-        TODO: Compute the gradient for leaky ReLU here.
+        Done: Compute the gradient for leaky ReLU here.
         """
+        tmp = self.x
+        tmp[np.where(tmp >= 0)] = 1
+        tmp[np.where(tmp < 0)] = 0.01
+        return tmp
         raise NotImplementedError("leakyReLU gradient not implemented")
 
 
@@ -214,6 +239,9 @@ class Layer():
         self.d_w = None  # Save the gradient w.r.t w in this
         self.d_b = None  # Save the gradient w.r.t b in this
 
+        ## Initialize the weight matrix
+        self.w = np.zeros([in_units + 1, out_units])  #+1 for the bias
+
     def __call__(self, x):
         """
         Make layer callable.
@@ -222,10 +250,13 @@ class Layer():
 
     def forward(self, x):
         """
-        TODO: Compute the forward pass through the layer here.
+        Done: Compute the forward pass through the layer here.
         DO NOT apply activation here.
         Return self.a
         """
+        self.x = np.insert(x, 0, 1, axis = 1)  #for bias
+        self.a = self.x @ self.w
+        return self.a
         raise NotImplementedError("Layer forward pass not implemented.")
 
     def backward(self, delta):
@@ -278,11 +309,21 @@ class Neuralnetwork():
 
     def forward(self, x, targets=None):
         """
-        TODO: Compute forward pass through all the layers in the network and return it.
+        Done: Compute forward pass through all the layers in the network and return it.
         If targets are provided, return loss as well.
+        layer + activation:
+        layer1 + hiden units activation
+        layer2 + hiden units activation
+        ......
+        last layer + softmax activation
         """
+        tmp_x = x
 
-        return forward_results
+        for i in range(len(self.layers)):
+            tmp_x = self.layers[i].forward(tmp_x)
+
+        forward_results= tmp_x
+        return softmax(forward_results)
         raise NotImplementedError("Forward not implemented for NeuralNetwork")
 
     def loss(self, logits, targets):
@@ -300,9 +341,22 @@ class Neuralnetwork():
         TODO: Implement backpropagation here.
         Call backward methods of individual layers.
         '''
+
         raise NotImplementedError("Backprop not implemented for NeuralNetwork")
 
 
+def AccuracyCompu(model, X_test, y_test):
+    """
+    Done: Calculate and return the accuracy on the test set.  Only forward
+    """
+    forward_result = model.forward(x = X_test, targets = None)
+    category = np.argmax(y_test, axis = 1)
+    prediction = np.argmax(forward_result, axis = 1)
+    correct = [1 if a == b else 0 for (a, b) in zip(category, prediction)] # compare prediction and actual y
+    accuracy = sum(correct) / len(correct)
+    return accuracy
+
+    raise NotImplementedError("Test method not implemented")
 
 
 def train(model, x_train, y_train, x_valid, y_valid, config):
@@ -313,20 +367,29 @@ def train(model, x_train, y_train, x_valid, y_valid, config):
     Use config to set parameters for training like learning rate, momentum, etc.
     Forward + Backward
     """
+    #model.epoches
+    #model.batchsize
+    for i in range(model.epoches):
+        idx = np.arange(0,x_train.shape[0])
+        random.shuffle(idx)
+        index = 0
+        while index < x_train.shape[0]:
+            if index + model.miniBatchSize <= x_train.shape[0]:
+                x_train_batch = x_train[idx[index:index+model.miniBatchSize],:]
+                y_train_batch = y_train[idx[index:index+model.miniBatchSize],:]
+                index += model.miniBatchSize
+            else:
+                x_train_batch = x_train[idx[index:],:]
+                y_train_batch = y_train[idx[index:],:]
+                index = x_train.shape[0]
+            forward_result = model.forward(x = x_train_batch, targets = None)
+            forward_loss = model.loss(forward_result, y_train_batch)
+            model.backward()  #backward -> update the weights
 
+        # accuracy
+        train_accuracy = AccuracyCompu(model, x_train, y_train)
+        test_accuracy = AccuracyCompu(model, x_valid, y_valid)
     raise NotImplementedError("Train method not implemented")
-
-
-def test(model, X_test, y_test):
-    """
-    TODO: Calculate and return the accuracy on the test set.  Only forward
-    """
-
-
-
-
-    raise NotImplementedError("Test method not implemented")
-
 
 if __name__ == "__main__":
     # Load the configuration.
@@ -337,6 +400,15 @@ if __name__ == "__main__":
 
     # Load the data and split the validation set
     x_train, y_train = load_data(path="../Data/", mode="train")
+
+    #test
+    # test = np.arange(-10,10, dtype = float)
+    # # if activation_type not in ["sigmoid", "tanh", "ReLU", "leakyReLU"]:
+    # test1 = Activation("leakyReLU")
+    # print(test1.forward(test))
+    # print(test1.backward(test)[0])
+    # asd
+    # #test
 
     #create a valibration split (10% from the total)
     idx = np.arange(0,x_train.shape[0])

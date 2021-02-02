@@ -252,7 +252,7 @@ class Layer():
             self.b = np.sqrt(2 / (in_units + out_units)) * np.random.randn(1, out_units)  #+1 for the bias
         else:
             self.w = np.sqrt(2 / (in_units + out_units)) * np.random.randn(in_units, out_units)  #+1 for the bias
-            self.b = np.sqrt(2 / (in_units + out_units)) * np.random.randn(1, out_units)  #+1 for the bias
+            self.b = np.sqrt(2 / (in_units + out_units)) * np.random.randn(1, out_units) #+1 for the bias
         self.w = np.concatenate((self.b, self.w), axis = 0)
 
     def __call__(self, x):
@@ -622,7 +622,6 @@ if __name__ == "__main__":
     problemB = False #finish the problem b instead of running nn
 
     config = load_config("../")
-
     # Create the model
     model  = Neuralnetwork(config)
 
@@ -647,8 +646,8 @@ if __name__ == "__main__":
     # Done: train the model
     else:
         Train_accuracy_lists, Valid_accuracy_lists, Train_loss_lists, Valid_loss_lists, w_ = train(model, x_train, y_train, x_valid, y_valid, config)
-        plotFunc(Train_accuracy_lists, Valid_accuracy_lists, config['activation'], "Accuracy", model.learningRate, model.momentumGamma, model.L2Penalty, True)
-        plotFunc(Train_loss_lists, Valid_loss_lists, config['activation'], "Loss", model.learningRate, model.momentumGamma, model.L2Penalty, True)
+        plotFunc(Train_accuracy_lists, Valid_accuracy_lists, config['activation'], "Accuracy", model.learningRate, model.momentumGamma, model.L2Penalty, config['layer_specs'][1], config['layer_specs'][2], True)
+        plotFunc(Train_loss_lists, Valid_loss_lists, config['activation'], "Loss", model.learningRate, model.momentumGamma, model.L2Penalty, config['layer_specs'][1], config['layer_specs'][2], True)
         for i in range(int((len(model.layers) + 1) / 2)):
             model.layers[2 * i].w = w_[i]
         test_acc, test_loss = AccuracyCompu(model, x_test, y_test)

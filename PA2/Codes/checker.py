@@ -1,6 +1,9 @@
 ################################################################################
-# CSE 251B: Programming Assignment 2
-# Winter 2021
+# CSE 253: Programming Assignment 2
+# Code snippet by Manjot Bilkhu
+# Winter 2020
+################################################################################
+# We've provided you with the dataset in PA2.zip
 ################################################################################
 # To install PyYaml, refer to the instructions for your system:
 # https://pyyaml.org/wiki/PyYAMLDocumentation
@@ -17,9 +20,9 @@ import pickle
 
 def get_data(path):
     """
-    Load the sabity data to verify your implementation.
+    Load the sanity data to verify your implementation.
     """
-    return pickle.load(open(path + 'sanity.pkl', 'rb'), encoding='latin1')
+    return pickle.load(open(path + 'sanity.pkl', 'rb'))
 
 
 def load_config(path):
@@ -48,7 +51,7 @@ def sanity_layers(data):
     np.random.seed(42)
 
     # Pseudo-input.
-    random_input = np.random.randn(1, 100)
+    random_input = np.random.randn(1, 50)
 
     # Get the activations.
     act_sigmoid = neuralnet.Activation('sigmoid')
@@ -77,10 +80,10 @@ def sanity_layers(data):
     print(20 * "-", "\n")
 
     # Compute the gradients.
-    grad_sigmoid = act_sigmoid.backward(1.0)
-    grad_tanh    = act_tanh.backward(1.0)
-    grad_ReLU    = act_ReLU.backward(1.0)
-    grad_leakyReLU = act_leakyReLU.backward(1.0)
+    grad_sigmoid = act_sigmoid.backward(1.0, 1)
+    grad_tanh    = act_tanh.backward(1.0, 1)
+    grad_ReLU    = act_ReLU.backward(1.0, 1)
+    grad_leakyReLU = act_leakyReLU.backward(1.0, 1)
 
     # Compute the errors.
     err_sigmoid_grad = np.sum(np.abs(data['grad_sigmoid'] - grad_sigmoid))
@@ -118,11 +121,11 @@ def sanity_network(data, default_config):
 
     layer_no = 0
     for layer_idx, layer in enumerate(nnet.layers):
-        if isinstance(layer, neuralnet.Layer):
+        if isinstance(layer, neuralnet.Layer):  #check the element label
             layer_no += 1
-            error_x   = np.sum(np.abs(data['nnet'].layers[layer_idx].x   - layer.x))
-            error_w   = np.sum(np.abs(data['nnet'].layers[layer_idx].w   - layer.w))
-            error_b   = np.sum(np.abs(data['nnet'].layers[layer_idx].b   - layer.b))
+            error_x   = np.sum(np.abs(data['nnet'].layers[layer_idx].x   - layer.x[:,1:]))
+            error_w   = np.sum(np.abs(data['nnet'].layers[layer_idx].w   - layer.w[1:,:]))
+            error_b   = np.sum(np.abs(data['nnet'].layers[layer_idx].b   - layer.w[0,:]))
             error_d_w = np.sum(np.abs(data['nnet'].layers[layer_idx].d_w - layer.d_w))
             error_d_b = np.sum(np.abs(data['nnet'].layers[layer_idx].d_b - layer.d_b))
 
@@ -142,4 +145,5 @@ if __name__ == '__main__':
 
     # Run Sanity.
     sanity_layers(sanity_data)
+    print("Layers check done!")
     sanity_network(sanity_data, default_config)

@@ -8,6 +8,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import time
 import os
+import sys
 
 # TODO: Some missing values are represented by '__'. You need to fill these up.
 Batch_size = 4
@@ -246,21 +247,10 @@ if __name__ == "__main__":
         os.makedirs(figure_save)
 
     # Training mode: set Visualization = False & Final_result = False
-    Visualization = True # Call the best model and draw the semantic segment figure
-    Final_result = True  # Call the best model and compute the final results on the validation model (accuracy, IoU)
-    
-    if Final_result:
-        model_dict = torch.load('./best_model')
-        accu, loss, Iou, targetIou = val(epochs, use_gpu, model_dict)
-        print("accuracy: {}".format(accu))
-        print("average IoU: {}".format(Iou))
-        print("IoU (road): {}".format(targetIou[0]))
-        print("IoU (sidewalk): {}".format(targetIou[1]))
-        print("IoU (car): {}".format(targetIou[2]))
-        print("IoU (billboard): {}".format(targetIou[3]))
-        print("IoU (sky): {}".format(targetIou[4]))
+    Visualization = sys.argv[1] # Call the best model and draw the semantic segment figure
+    Final_result = sys.argv[2]  # Call the best model and compute the final results on the validation model (accuracy, IoU)
 
-    elif Visualization: # Call the best model and find the segment image
+    if Visualization == 'true': # Call the best model and find the segment image
         # /datasets/cs251-wi21-A00-public/idd20kII/leftImg8bit/Images/334/frame5427_leftImg8bit.jpg,/datasets/cs251-wi21-A00-public/idd20kII/gtFine/Labels/334/frame5427_gtFine_labellevel3Ids.png (first image in test.csv)
         model_dict = torch.load('./best_model')
         X = test_dataset[0][0]
@@ -285,6 +275,18 @@ if __name__ == "__main__":
         img_resize = img.resize((1920, 1080))  #Resize to (1920, 1080)
         img_resize.save('./figures/semantic_segment.png')
         img_resize.show()
+
+    elif Final_result == 'true':
+        model_dict = torch.load('./best_model')
+        accu, loss, Iou, targetIou = val(epochs, use_gpu, model_dict)
+        print("accuracy: {}".format(accu))
+        print("average IoU: {}".format(Iou))
+        print("IoU (road): {}".format(targetIou[0]))
+        print("IoU (sidewalk): {}".format(targetIou[1]))
+        print("IoU (car): {}".format(targetIou[2]))
+        print("IoU (billboard): {}".format(targetIou[3]))
+        print("IoU (sky): {}".format(targetIou[4]))
+
     else:
         accu, loss, Iou, targetIou = val(0, use_gpu, fcn_model)  # show the accuracy before training
         train(accu, use_gpu, Iou, targetIou)

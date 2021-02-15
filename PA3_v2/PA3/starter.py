@@ -10,9 +10,9 @@ import time
 import os
 
 # TODO: Some missing values are represented by '__'. You need to fill these up.
-Batch_size = 6
-Width = 512
-Height = 960
+Batch_size = 16
+Width = 256
+Height = 480
 train_dataset = IddDataset(csv_file='train.csv', w = Width, h = Height)
 batch_train = DataLoader(train_dataset, batch_size = Batch_size, num_workers = 4, shuffle = True)
 val_dataset = IddDataset(csv_file='val.csv', w = Width, h = Height)
@@ -63,8 +63,6 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
     ValLoss = []
     TrainLoss = []
     fcn_model.train()
-    Large_value = 100000000
-    prev_loss = Large_value
     Early_stop = []
     for epoch in range(epochs):
         ts = time.time()
@@ -100,9 +98,9 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
         TargetIou_list.append(targetIou)
 
         if len(Early_stop) < earlyStop_thres:  #The first earlyStop_thres steps
-            Early_stop.append(ValLoss)
+            Early_stop.append(val_loss)
         else: #compare the current valid loss with Early_stop[earlyStop_thres - 1] and Early_stop[earlyStop_thres - 1] with Early_stop[earlyStop_thres - 2], .... etc
-            Early_stop.append(ValLoss)
+            Early_stop.append(val_loss)
             flag = judge(Early_stop)
             if flag:
                 print("Early stop!")
@@ -110,9 +108,8 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
             else:
                 Early_stop.pop(0)
 
-        if val_loss < prev_loss:
+        if val_loss <= min(ValLoss):
             print("New model is saved!")
-            prev_loss = val_loss
             torch.save(fcn_model, 'best_model')
 
         print("Train Loss_list:", TrainLoss)
@@ -126,8 +123,6 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
     plotLoss(TrainLoss, ValLoss, param = "Loss", do_save_fig = True)
     plotPixelaccracy(Accuracy_list, param = "P_accu", do_save_fig = True)
     ploIoU(Iou_list, TargetIou_list, param = "IoU", do_save_fig = True)
-
-    
 
 
 def val(epoch, use_gpu):

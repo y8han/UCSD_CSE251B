@@ -18,7 +18,6 @@ batch_train = DataLoader(train_dataset, batch_size = Batch_size, num_workers = 4
 val_dataset = IddDataset(csv_file='val.csv', w = Width, h = Height)
 batch_val = DataLoader(val_dataset, batch_size = Batch_size, num_workers = 4, shuffle = True)
 test_dataset = IddDataset(csv_file='test.csv', w = Width, h =Height)
-batch_test = DataLoader(test_dataset, batch_size = Batch_size, num_workers = 4, shuffle = True)
 
 # train_loader = DataLoader(dataset=train_dataset, batch_size= __, num_workers= __, shuffle=True)
 # val_loader = DataLoader(dataset=val_dataset, batch_size= __, num_workers= __, shuffle=True)
@@ -245,5 +244,32 @@ if __name__ == "__main__":
     figure_save = './figures/'
     if not os.path.exists(figure_save):
         os.makedirs(figure_save)
-    accu, loss, Iou, targetIou = val(0, use_gpu)  # show the accuracy before training
-    train(accu, use_gpu, Iou, targetIou)
+    Visualization = True
+    if Visualization: # Call the best model and find the segment image
+        # /datasets/cs251-wi21-A00-public/idd20kII/leftImg8bit/Images/334/frame5427_leftImg8bit.jpg,/datasets/cs251-wi21-A00-public/idd20kII/gtFine/Labels/334/frame5427_gtFine_labellevel3Ids.png (first image in test.csv)
+        model_dict = torch.load('./best_model')
+        X = test_dataset[0][0]
+        X = X.unsqueeze(0)
+        Y = test_dataset[0][2]
+        if use_gpu:
+            inputs = X.to('cuda')  # Move your inputs onto the gpu
+            labels = Y.to('cuda')  # Move your labels onto the gpu
+        else:
+            inputs, labels = X, Y  # Unpack variables into inputs and labels
+        outputs = model_dict.forward(inputs)
+        outputs = outputs[0]
+        outputs = torch.argmax(outputs, axis = 0)
+        h, w = labels.shape
+        Image_ = np.zeros((h, w, 3), dtype = np.uint8)
+        for h_ in range(h):
+            for w_ in range(w):
+               Image_[h_][w_][0] = color_labels[outputs[h_][w_]].color[0]
+               Image_[h_][w_][1] = color_labels[outputs[h_][w_]].color[1]
+               Image_[h_][w_][2] = color_labels[outputs[h_][w_]].color[2]
+        img = Image.fromarray(Image_, 'RGB')
+        img_resize = img.resize((1920, 1080))  #Resize to (1920, 1080)
+        img_resize.save('semantic_segment.png')
+        img_resize.show()
+    else:
+        accu, loss, Iou, targetIou = val(0, use_gpu)  # show the accuracy before training
+        train(accu, use_gpu, Iou, targetIou)

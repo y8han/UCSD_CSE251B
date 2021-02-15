@@ -16,7 +16,7 @@ Label = namedtuple( 'Label' , [
     'color'       , 
     ] )
 
-labels = [
+color_labels = [
     #       name                     level3Id  color
     Label(  'road'                 ,    0  , (128, 64,128)  ),
     Label(  'drivable fallback'    ,    1  , ( 81,  0, 81)  ),
@@ -27,7 +27,7 @@ labels = [
     Label(  'motorcycle'           ,    6  , (  0,  0,230)  ),
     Label(  'bicycle'              ,   7  , (119, 11, 32)  ),
     Label(  'autorickshaw'         ,   8  , (255, 204, 54) ),
-    Label(  'car'                  ,   9  , (  0,  0,142)  ),
+    Label(  'car'                  ,   9  , (  0,  0, 142)  ),
     Label(  'truck'                ,  10 ,  (  0,  0, 70)  ),
     Label(  'bus'                  ,  11 ,  (  0, 60,100)  ),
     Label(  'vehicle fallback'     ,  12 ,  (136, 143, 153)),  

@@ -28,10 +28,10 @@ def iou_compu(pred, target):
         pred_oneshot_[c][c == tmp] = 1
 
     for cls in range(n_class - 1):
-        tmp = target[cls,:,:]
-        FP_TP_FN_TP = torch.sum(tmp) + torch.sum(pred_oneshot[cls,:,:])
+        tmp1 = target[cls,:,:]
+        FP_TP_FN_TP = torch.sum(tmp1) + torch.sum(pred_oneshot[cls,:,:])
         FP_TP_FN_TP = int(FP_TP_FN_TP.item())
-        TP = torch.eq(tmp, pred_oneshot_[cls,:,:]) == True
+        TP = torch.eq(tmp1, pred_oneshot_[cls,:,:]) == True
         TP = TP[TP].shape[0]
         intersection = TP # intersection calculation
         union = FP_TP_FN_TP - TP #Union calculation

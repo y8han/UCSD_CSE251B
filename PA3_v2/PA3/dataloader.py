@@ -193,7 +193,7 @@ class IddDataset(Dataset):
             maxKey = max(maxKey, key)
             total += value
         self.weightLoss = []
-        for i in range(maxKey):
+        for i in range(maxKey+1):
             self.weightLoss.append(total/self.classWeight[i])
         return torch.tensor(np.array(self.weightLoss))
 

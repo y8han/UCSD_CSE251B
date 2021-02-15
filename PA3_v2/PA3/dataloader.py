@@ -10,9 +10,9 @@ import numpy as np
 from PIL import Image
 import torch
 import pandas as pd
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import random
-
+from tqdm import tqdm 
 n_class    = 27
 
 # a label and all meta information
@@ -156,10 +156,10 @@ class IddDataset(Dataset):
         
         # The following transformation normalizes each channel using the mean and std provided
         self.transforms = transforms.Compose([
-                                            #Resize((1080, 1920)),
+                                            Resize((512, 960)),
                                             #RondomCrop((1024, 1320)),
                                             #Blur(),
-                                            CenterCrop((600, 900)),
+                                            #CenterCrop((600, 900)),
                                             #Rotate(),
                                             #MirrorFlip(),
                                             ToTensor(),
@@ -191,12 +191,42 @@ class IddDataset(Dataset):
         #for c in range(self.n_class):
         #    target[c][c==label] = 1
         return img, label
+    def classWeightCalculate(self):
+        self.classWeight = defaultdict(int)
+        for idx in tqdm(range(len(self.data)), desc="Loading..."):
+            label_name = self.data.iloc[idx, 1]
+            label = np.asarray(Image.open(label_name))
+            values, counts = np.unique(label, return_counts=True)
+            for i in range(len(values)):
+                self.classWeight[values[i]] += counts[i]
+        return self.classWeight
+    def weightedLossCalculate(self):
+        if self.weightLoss:
+            return self.weightLoss
+        if not self.classWeight:
+            self.classWeightCalculate()
+        total = 0
+        maxKey = 0
+        for key, value in self.classWeight.items():
+            maxKey = max(maxKey, key)
+            total += value
+        self.weightLoss = []
+        for i in range(maxKey):
+            self.weightLoss.append(total/self.classWeight[i])
+        return torch.tensor(np.array(self.weightLoss))
 
 
 # In[4]:
 
 
 Idd = IddDataset('train.csv')
+
+
+# In[13]:
+
+
+
+Idd.weightedLossCalculate()
 
 
 # In[5]:

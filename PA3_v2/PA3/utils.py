@@ -2,6 +2,9 @@ import torch
 from dataloader_3 import n_class
 from sklearn.metrics import confusion_matrix
 import numpy as np
+from PIL import Image
+import matplotlib.pyplot as plt
+import os, random
 
 Tagret = [0 , 2, 9, 17, 25]
 
@@ -48,3 +51,47 @@ def pixel_acc(pred, target, use_gpu):
     accu = torch.eq(pred[mask], target[mask]) == True
     num_accu = list(accu[accu].shape)[0] / total_pixel  # pixel accuracy
     return num_accu
+
+# plot the curve of Cost on Training & Validation set against epoch
+def plotLoss(train_list, val_list, param = 'Loss', do_save_fig = False):
+    fig = plt.figure()
+    save_root = "./figures/" + param + "_curves.png"
+    TrainLabel = 'Training Set ' + param
+    ValLabel = 'Validation Set ' + param
+    plt.plot(train_list, 'b', label=TrainLabel)
+    plt.plot(val_list, 'r', label=ValLabel)
+    plt.xlabel('M epochs')
+    plt.ylabel(param)
+    plt.title('Training and Validation ' + param + ' across training epochs')
+    plt.grid('color')
+    plt.legend(['Training Set', 'Validation Set'])
+    if do_save_fig:
+        plt.savefig(save_root)
+
+def plotPixelaccracy(val_list, param='P_accu', do_save_fig = False):
+    fig = plt.figure()
+    save_root = "./figures/" + param + "_curves.png"
+    ValLabel = 'Validation Set ' + param
+    plt.plot(val_list, 'r', label=ValLabel)
+    plt.xlabel('M epochs')
+    plt.ylabel(param)
+    plt.title('Validation ' + param + ' across training epochs')
+    plt.grid('color')
+    plt.legend(['Validation Set'])
+    if do_save_fig:
+        plt.savefig(save_root)
+
+def ploIoU(IoU_list, Target_IoU_list, param = 'IoU', do_save_fig = False):
+    fig = plt.figure()
+    save_root = "./figures/" + param + "_curves.png"
+    IoU = 'Validation Set ' + param
+    Target_IoU = 'Validation Set Target ' + param
+    plt.plot(IoU_list, 'b', label = IoU)
+    plt.plot(Target_IoU_list, 'r', label = Target_IoU)
+    plt.xlabel('M epochs')
+    plt.ylabel(param)
+    plt.title('Validation ' + param + ' across training epochs')
+    plt.grid('color')
+    plt.legend(['IoU', 'Target IoU'])
+    if do_save_fig:
+        plt.savefig(save_root)

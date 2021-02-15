@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 import time
-
+import os
 
 # TODO: Some missing values are represented by '__'. You need to fill these up.
 Batch_size = 6
@@ -38,7 +38,7 @@ def judge(alist):
 		return True
 
 epochs = 40   # Trainging Epoch
-earlyStop_thres = 2  #error on validation continueu to go up for earlyStop_thres epoches (early stop)
+earlyStop_thres = 3  #error on validation continueu to go up for earlyStop_thres epoches (early stop)
 criterion = torch.nn.CrossEntropyLoss(ignore_index = n_class)  # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
 # TODO: ignore index out of boundry (0-26, but 27,28 may appear)
 # TODO: Update Weight of each class
@@ -121,6 +121,12 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
         print("Valid IoU_list:", Iou_list)
         print("Valid TargetIoU_list:", TargetIou_list)
         fcn_model.train()
+
+    #visualize & save figures
+    plotLoss(TrainLoss, ValLoss, param = "Loss", do_save_fig = True)
+    plotPixelaccracy(Accuracy_list, param = "P_accu", do_save_fig = True)
+    ploIoU(Iou_list, TargetIou_list, param = "IoU", do_save_fig = True)
+
     
 
 
@@ -177,5 +183,8 @@ def val(epoch, use_gpu):
     # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
+    figure_save = './figures/'
+    if not os.path.exists(figure_save):
+        os.makedirs(figure_save)
     accu, loss, Iou, targetIou = val(0, use_gpu)  # show the accuracy before training
     train(accu, use_gpu, Iou, targetIou)

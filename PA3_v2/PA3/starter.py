@@ -63,11 +63,16 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
     TargetIou_list_9 = []
     TargetIou_list_17 = []
     TargetIou_list_25 = []
-    TargetIou_list_0.append(Init_tagretioU[0])
-    TargetIou_list_2.append(Init_tagretioU[1])
-    TargetIou_list_9.append(Init_tagretioU[2])
-    TargetIou_list_17.append(Init_tagretioU[3])
-    TargetIou_list_25.append(Init_tagretioU[4])
+    if Init_tagretioU[0] > 0:
+        TargetIou_list_0.append(Init_tagretioU[0])
+    if Init_tagretioU[1] > 0:
+        TargetIou_list_2.append(Init_tagretioU[1])
+    if Init_tagretioU[2] > 0:
+        TargetIou_list_9.append(Init_tagretioU[2])
+    if Init_tagretioU[3] > 0:
+        TargetIou_list_17.append(Init_tagretioU[3])
+    if Init_tagretioU[4] > 0:
+        TargetIou_list_25.append(Init_tagretioU[4])
     ValLoss = []
     TrainLoss = []
     fcn_model.train()
@@ -103,11 +108,16 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
         Accuracy_list.append(accu)
         ValLoss.append(val_loss)
         Iou_list.append(Iou)
-        TargetIou_list_0.append(targetIou[0])
-        TargetIou_list_2.append(targetIou[1])
-        TargetIou_list_9.append(targetIou[2])
-        TargetIou_list_17.append(targetIou[3])
-        TargetIou_list_25.append(targetIou[4])
+        if targetIou[0] > 0:
+            TargetIou_list_0.append(targetIou[0])
+        if targetIou[1] > 0:
+            TargetIou_list_2.append(targetIou[1])
+        if targetIou[2] > 0:
+            TargetIou_list_9.append(targetIou[2])
+        if targetIou[3] > 0:
+            TargetIou_list_17.append(targetIou[3])
+        if targetIou[4] > 0:
+            TargetIou_list_25.append(targetIou[4])
         if len(Early_stop) < earlyStop_thres:  #The first earlyStop_thres steps
             Early_stop.append(val_loss)
         else: #compare the current valid loss with Early_stop[earlyStop_thres - 1] and Early_stop[earlyStop_thres - 1] with Early_stop[earlyStop_thres - 2], .... etc
@@ -169,43 +179,58 @@ def val(epoch, use_gpu):
             if use_gpu:
                 iou, target_ious_0, target_ious_2, target_ious_9, target_ious_17, target_ious_25  = iou_compu(outputs[t_], tar.to('cuda')[t_])
                 aver_iou.append(iou)
-                aver_target_iou_0.append(target_ious_0)
-                aver_target_iou_2.append(target_ious_2)
-                aver_target_iou_9.append(target_ious_9)
-                aver_target_iou_17.append(target_ious_17)
-                aver_target_iou_25.append(target_ious_25)
+                if target_ious_0 > 0:
+                    aver_target_iou_0.append(target_ious_0)
+                if target_ious_2 > 0:
+                    aver_target_iou_2.append(target_ious_2)
+                if target_ious_9 > 0:
+                    aver_target_iou_9.append(target_ious_9)
+                if target_ious_17 > 0:
+                    aver_target_iou_17.append(target_ious_17)
+                if target_ious_25 > 0:
+                    aver_target_iou_25.append(target_ious_25)
             else:
                 iou, target_ious_0, target_ious_2, target_ious_9, target_ious_17, target_ious_25 = iou_compu(outputs[t_], tar[t_])
                 aver_iou.append(iou)
-                aver_target_iou_0.append(target_ious_0)
-                aver_target_iou_2.append(target_ious_2)
-                aver_target_iou_9.append(target_ious_9)
-                aver_target_iou_17.append(target_ious_17)
-                aver_target_iou_25.append(target_ious_25)
+                if target_ious_0 > 0:
+                    aver_target_iou_0.append(target_ious_0)
+                if target_ious_2 > 0:
+                    aver_target_iou_2.append(target_ious_2)
+                if target_ious_9 > 0:
+                    aver_target_iou_9.append(target_ious_9)
+                if target_ious_17 > 0:
+                    aver_target_iou_17.append(target_ious_17)
+                if target_ious_25 > 0:
+                    aver_target_iou_25.append(target_ious_25)
         aver_iou = sum(aver_iou) / len(aver_iou)
-        aver_target_iou_0 = sum(aver_target_iou_0) / len(aver_target_iou_0)
-        aver_target_iou_2 = sum(aver_target_iou_2) / len(aver_target_iou_2)
-        aver_target_iou_9 = sum(aver_target_iou_9) / len(aver_target_iou_9)
-        aver_target_iou_17 = sum(aver_target_iou_17) / len(aver_target_iou_17)
-        aver_target_iou_25 = sum(aver_target_iou_25) / len(aver_target_iou_25)
+        aver_target_iou_0 = compute_aver(aver_target_iou_0)
+        aver_target_iou_2 = compute_aver(aver_target_iou_2)
+        aver_target_iou_9 = compute_aver(aver_target_iou_9)
+        aver_target_iou_17 = compute_aver(aver_target_iou_17)
+        aver_target_iou_25 = compute_aver(aver_target_iou_25)
         Loss.append(float(loss.cpu().detach()))
         Accuracy.append(num_accu)
         IoU.append(aver_iou)
-        TargetIoU_0.append(aver_target_iou_0)
-        TargetIoU_2.append(aver_target_iou_2)
-        TargetIoU_9.append(aver_target_iou_9)
-        TargetIoU_17.append(aver_target_iou_17)
-        TargetIoU_25.append(aver_target_iou_25)
+        if aver_target_iou_0 > 0:
+            TargetIoU_0.append(aver_target_iou_0)
+        if aver_target_iou_2 > 0:
+            TargetIoU_2.append(aver_target_iou_2)
+        if aver_target_iou_9 > 0:
+            TargetIoU_9.append(aver_target_iou_9)
+        if aver_target_iou_17 > 0:
+            TargetIoU_17.append(aver_target_iou_17)
+        if aver_target_iou_25 > 0:
+            TargetIoU_25.append(aver_target_iou_25)
         if iter % 10 == 0:
             print("epoch{}, iter{}, accuracy".format(epoch, iter))
     Aver_accu = sum(Accuracy) / len(Accuracy)
     Aver_loss = sum(Loss) / len(Loss)
     IoU = sum(IoU) / len(IoU)
-    TargetIoU_0 = sum(TargetIoU_0) / len(TargetIoU_0)
-    TargetIoU_2 = sum(TargetIoU_2) / len(TargetIoU_2)
-    TargetIoU_9 = sum(TargetIoU_9) / len(TargetIoU_9)
-    TargetIoU_17 = sum(TargetIoU_17) / len(TargetIoU_17)
-    TargetIoU_25 = sum(TargetIoU_25) / len(TargetIoU_25)
+    TargetIoU_0 = compute_aver(TargetIoU_0)
+    TargetIoU_2 = compute_aver(TargetIoU_2)
+    TargetIoU_9 = compute_aver(TargetIoU_9)
+    TargetIoU_17 = compute_aver(TargetIoU_17)
+    TargetIoU_25 = compute_aver(TargetIoU_25)
     print("Validation: Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
     # print("Validation Set: Pixel accuracy(Loss) at epoch {} is {}({})".format(epoch, Aver_accu, Aver_loss))
     return Aver_accu, Aver_loss, IoU, [TargetIoU_0, TargetIoU_2, TargetIoU_9, TargetIoU_17, TargetIoU_25]

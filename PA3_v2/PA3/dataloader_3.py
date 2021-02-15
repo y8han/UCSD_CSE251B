@@ -124,7 +124,7 @@ class Normalize(object):
         return image, label
 
 class IddDataset(Dataset):
-    def __init__(self, csv_file, n_class=n_class, transforms_=None):
+    def __init__(self, csv_file, n_class=n_class, transforms_=None, w = 0, h = 0):
         self.data      = pd.read_csv(csv_file)
         self.n_class   = n_class
         self.mode = csv_file
@@ -133,7 +133,7 @@ class IddDataset(Dataset):
         
         # The following transformation normalizes each channel using the mean and std provided
         self.transforms = transforms.Compose([
-                                            Resize((1024, 1920)),
+                                            Resize((w, h)),
                                               #RondomCrop((1024, 1320)),
                                               #Blur(),
                                               #Rotate(),
@@ -141,7 +141,6 @@ class IddDataset(Dataset):
                                               ToTensor(),
                                               #Normalize(),
                                              ])
-
     def __len__(self):
         return len(self.data)
 
@@ -157,13 +156,12 @@ class IddDataset(Dataset):
 
         # create one-hot encoding
         label = torch.squeeze(label)
+        h, w = label.shape
+        target = torch.zeros(self.n_class, h, w)
+        for c in range(self.n_class):
+           target[c][c==label] = 1
         
-        #h, w = label.shape
-        #target = torch.zeros(self.n_class, h, w)
-        #for c in range(self.n_class):
-        #    target[c][c==label] = 1
-        
-        return img, label
+        return img, target, label
 
 
 

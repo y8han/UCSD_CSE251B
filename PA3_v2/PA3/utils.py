@@ -6,6 +6,12 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import os, random
 
+def compute_aver(target_ious):
+    if len(target_ious) > 0:
+        return sum(target_ious) / len(target_ious)
+    else:
+        return -1
+
 def iou_compu(pred, target):
     ious = []
     target_ious_0 = []
@@ -47,11 +53,11 @@ def iou_compu(pred, target):
                 target_ious_25.append(intersection / union)
 
     ious = sum(ious) / len(ious)
-    target_ious_0 = sum(target_ious_0) / len(target_ious_0)
-    target_ious_2 = sum(target_ious_2) / len(target_ious_2)
-    target_ious_9 = sum(target_ious_9) / len(target_ious_9)
-    target_ious_17 = sum(target_ious_17) / len(target_ious_17)
-    target_ious_25 = sum(target_ious_25) / len(target_ious_25)
+    target_ious_0 = compute_aver(target_ious_0)
+    target_ious_2 = compute_aver(target_ious_2)
+    target_ious_9 = compute_aver(target_ious_9)
+    target_ious_17 = compute_aver(target_ious_17)
+    target_ious_25 = compute_aver(target_ious_25)
     return ious, target_ious_0, target_ious_2, target_ious_9, target_ious_17, target_ious_25
 
 

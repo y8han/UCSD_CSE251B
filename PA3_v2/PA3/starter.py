@@ -244,7 +244,7 @@ if __name__ == "__main__":
     figure_save = './figures/'
     if not os.path.exists(figure_save):
         os.makedirs(figure_save)
-    Visualization = True
+    Visualization = False
     if Visualization: # Call the best model and find the segment image
         # /datasets/cs251-wi21-A00-public/idd20kII/leftImg8bit/Images/334/frame5427_leftImg8bit.jpg,/datasets/cs251-wi21-A00-public/idd20kII/gtFine/Labels/334/frame5427_gtFine_labellevel3Ids.png (first image in test.csv)
         model_dict = torch.load('./best_model')
@@ -268,7 +268,7 @@ if __name__ == "__main__":
                Image_[h_][w_][2] = color_labels[outputs[h_][w_]].color[2]
         img = Image.fromarray(Image_, 'RGB')
         img_resize = img.resize((1920, 1080))  #Resize to (1920, 1080)
-        img_resize.save('semantic_segment.png')
+        img_resize.save('./figures/semantic_segment.png')
         img_resize.show()
     else:
         accu, loss, Iou, targetIou = val(0, use_gpu)  # show the accuracy before training

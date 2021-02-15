@@ -145,7 +145,7 @@ class IddDataset(Dataset):
                                             #Rotate(),
                                             #MirrorFlip(),
                                             ToTensor(),
-                                            #Normalize(),
+                                            Normalize(),
                                             ])
 
     def __len__(self):

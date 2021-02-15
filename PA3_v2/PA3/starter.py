@@ -58,8 +58,16 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
     Accuracy_list.append(init_accu)
     Iou_list = []
     Iou_list.append(InitioU)
-    TargetIou_list = []
-    TargetIou_list.append(Init_tagretioU)
+    TargetIou_list_0 = []
+    TargetIou_list_2 = []
+    TargetIou_list_9 = []
+    TargetIou_list_17 = []
+    TargetIou_list_25 = []
+    TargetIou_list_0.append(Init_tagretioU[0])
+    TargetIou_list_2.append(Init_tagretioU[1])
+    TargetIou_list_9.append(Init_tagretioU[2])
+    TargetIou_list_17.append(Init_tagretioU[3])
+    TargetIou_list_25.append(Init_tagretioU[4])
     ValLoss = []
     TrainLoss = []
     fcn_model.train()
@@ -95,8 +103,11 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
         Accuracy_list.append(accu)
         ValLoss.append(val_loss)
         Iou_list.append(Iou)
-        TargetIou_list.append(targetIou)
-
+        TargetIou_list_0.append(targetIou[0])
+        TargetIou_list_2.append(targetIou[1])
+        TargetIou_list_9.append(targetIou[2])
+        TargetIou_list_17.append(targetIou[3])
+        TargetIou_list_25.append(targetIou[4])
         if len(Early_stop) < earlyStop_thres:  #The first earlyStop_thres steps
             Early_stop.append(val_loss)
         else: #compare the current valid loss with Early_stop[earlyStop_thres - 1] and Early_stop[earlyStop_thres - 1] with Early_stop[earlyStop_thres - 2], .... etc
@@ -116,13 +127,13 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
         print("Valid Accuracy_list:", Accuracy_list)
         print("Valid Loss_list:", ValLoss)
         print("Valid IoU_list:", Iou_list)
-        print("Valid TargetIoU_list:", TargetIou_list)
+        print("Valid TargetIoU_list:", TargetIou_list_0, TargetIou_list_2, TargetIou_list_9, TargetIou_list_17, TargetIou_list_25)
         fcn_model.train()
 
     #visualize & save figures
     plotLoss(TrainLoss, ValLoss, param = "Loss", do_save_fig = True)
     plotPixelaccracy(Accuracy_list, param = "P_accu", do_save_fig = True)
-    ploIoU(Iou_list, TargetIou_list, param = "IoU", do_save_fig = True)
+    ploIoU(Iou_list, TargetIou_list_0, TargetIou_list_2, TargetIou_list_9, TargetIou_list_17, TargetIou_list_25, param = "IoU", do_save_fig = True)
 
 
 def val(epoch, use_gpu):
@@ -133,7 +144,11 @@ def val(epoch, use_gpu):
     Accuracy = []
     Loss = []
     IoU = []
-    TargetIoU = []
+    TargetIoU_0 = []
+    TargetIoU_2 = []
+    TargetIoU_9 = []
+    TargetIoU_17 = []
+    TargetIoU_25 = []
     # print("Compute Accuracy: epoch {}".format(epoch))
     for iter, (X, tar, Y) in enumerate(batch_val):
         if use_gpu:
@@ -145,31 +160,55 @@ def val(epoch, use_gpu):
         loss = criterion(outputs, labels)
         num_accu = pixel_acc(outputs, labels, use_gpu)
         aver_iou = []
-        aver_target_iou = []
+        aver_target_iou_0 = []
+        aver_target_iou_2 = []
+        aver_target_iou_9 = []
+        aver_target_iou_17 = []
+        aver_target_iou_25 = []
         for t_ in range(outputs.shape[0]):
             if use_gpu:
-                iou, target_ious = iou_compu(outputs[t_], tar.to('cuda')[t_])
+                iou, target_ious_0, target_ious_2, target_ious_9, target_ious_17, target_ious_25  = iou_compu(outputs[t_], tar.to('cuda')[t_])
                 aver_iou.append(iou)
-                aver_target_iou.append(target_ious)
+                aver_target_iou_0.append(target_ious_0)
+                aver_target_iou_2.append(target_ious_2)
+                aver_target_iou_9.append(target_ious_9)
+                aver_target_iou_17.append(target_ious_17)
+                aver_target_iou_25.append(target_ious_25)
             else:
-                iou, target_ious = iou_compu(outputs[t_], tar[t_])
+                iou, target_ious_0, target_ious_2, target_ious_9, target_ious_17, target_ious_25 = iou_compu(outputs[t_], tar[t_])
                 aver_iou.append(iou)
-                aver_target_iou.append(target_ious)
+                aver_target_iou_0.append(target_ious_0)
+                aver_target_iou_2.append(target_ious_2)
+                aver_target_iou_9.append(target_ious_9)
+                aver_target_iou_17.append(target_ious_17)
+                aver_target_iou_25.append(target_ious_25)
         aver_iou = sum(aver_iou) / len(aver_iou)
-        aver_target_iou = sum(aver_target_iou) / len(aver_target_iou)
+        aver_target_iou_0 = sum(aver_target_iou_0) / len(aver_target_iou_0)
+        aver_target_iou_2 = sum(aver_target_iou_2) / len(aver_target_iou_2)
+        aver_target_iou_9 = sum(aver_target_iou_9) / len(aver_target_iou_9)
+        aver_target_iou_17 = sum(aver_target_iou_17) / len(aver_target_iou_17)
+        aver_target_iou_25 = sum(aver_target_iou_25) / len(aver_target_iou_25)
         Loss.append(float(loss.cpu().detach()))
         Accuracy.append(num_accu)
         IoU.append(aver_iou)
-        TargetIoU.append(aver_target_iou)
+        TargetIoU_0.append(aver_target_iou_0)
+        TargetIoU_2.append(aver_target_iou_2)
+        TargetIoU_9.append(aver_target_iou_9)
+        TargetIoU_17.append(aver_target_iou_17)
+        TargetIoU_25.append(aver_target_iou_25)
         if iter % 10 == 0:
             print("epoch{}, iter{}, accuracy".format(epoch, iter))
     Aver_accu = sum(Accuracy) / len(Accuracy)
     Aver_loss = sum(Loss) / len(Loss)
     IoU = sum(IoU) / len(IoU)
-    TargetIoU = sum(TargetIoU) / len(TargetIoU)
+    TargetIoU_0 = sum(TargetIoU_0) / len(TargetIoU_0)
+    TargetIoU_2 = sum(TargetIoU_2) / len(TargetIoU_2)
+    TargetIoU_9 = sum(TargetIoU_9) / len(TargetIoU_9)
+    TargetIoU_17 = sum(TargetIoU_17) / len(TargetIoU_17)
+    TargetIoU_25 = sum(TargetIoU_25) / len(TargetIoU_25)
     print("Validation: Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
     # print("Validation Set: Pixel accuracy(Loss) at epoch {} is {}({})".format(epoch, Aver_accu, Aver_loss))
-    return Aver_accu, Aver_loss, IoU, TargetIoU
+    return Aver_accu, Aver_loss, IoU, [TargetIoU_0, TargetIoU_2, TargetIoU_9, TargetIoU_17, TargetIoU_25]
 
 # No need to plot the curves on test dataset? (not mentioned in pdf)
 # def test():

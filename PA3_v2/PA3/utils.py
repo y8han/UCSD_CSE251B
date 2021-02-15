@@ -1,5 +1,5 @@
 import torch
-from dataloader_3 import n_class
+from dataloader import n_class
 from sklearn.metrics import confusion_matrix
 import numpy as np
 from PIL import Image

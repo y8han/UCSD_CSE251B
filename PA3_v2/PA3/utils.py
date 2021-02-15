@@ -66,7 +66,7 @@ def pixel_acc(pred, target, use_gpu):
         Remove_class = (n_class - 1) * torch.ones(target.shape).to('cuda')  #In order to remove class 26 when computing accuracy
     else:
         Remove_class = (n_class - 1) * torch.ones(target.shape)
-    mask = torch.gt(Remove_class, target)  #remove the class 26
+    mask = torch.gt(Remove_class.float(), target.float())  #remove the class 26
     pred = pred.argmax(axis = 1)
     total_pixel = list(pred[mask].shape)[0]
     accu = torch.eq(pred[mask], target[mask]) == True

@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 from torch.utils.data import Dataset, DataLoader# For custom data-sets
 import torchvision.transforms as transforms
 import numpy as np
@@ -52,16 +46,6 @@ labels = [
     Label(  'sky'                  ,  25 ,  ( 70,130,180)  ),
     Label(  'unlabeled'            ,  26 ,  (  0,  0,  0)  ),
 ]
-
-
-# In[ ]:
-
-
-
-
-
-# In[2]:
-
 
 class Resize(object):
     def __init__(self, output_size): # the output size should be a tuple of exactly (1080, 1920)
@@ -123,8 +107,9 @@ class ToTensor(object):
     def __call__(self, sample):
         image, label = sample
         image = self.transform(image)
-        label = torch.from_numpy(np.asarray(label))
+        label = torch.from_numpy(np.asarray(label).copy()).long()
         return image, label
+
 class CenterCrop(object):
     def __init__(self, size):
         self.size = size
@@ -134,6 +119,7 @@ class CenterCrop(object):
         img = self.transform(image)
         label = self.transform(label)
         return img, label
+
 class Normalize(object):
     def __init__(self):
         self.transform = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
@@ -142,12 +128,8 @@ class Normalize(object):
         image = self.transform(image)
         return image, label
 
-
-# In[3]:
-
-
 class IddDataset(Dataset):
-    def __init__(self, csv_file, n_class=n_class, transforms_=None):
+    def __init__(self, csv_file, n_class=n_class, transforms_=None, w = 0, h = 0):
         self.data      = pd.read_csv(csv_file)
         self.n_class   = n_class
         self.mode = csv_file
@@ -156,7 +138,7 @@ class IddDataset(Dataset):
         
         # The following transformation normalizes each channel using the mean and std provided
         self.transforms = transforms.Compose([
-                                            Resize((512, 960)),
+                                            Resize((w, h)),
                                             #RondomCrop((1024, 1320)),
                                             #Blur(),
                                             #CenterCrop((600, 900)),
@@ -175,9 +157,6 @@ class IddDataset(Dataset):
         img = Image.open(img_name).convert('RGB')
         label_name = self.data.iloc[idx, 1]
         label = Image.open(label_name)
-
-        #print(trans(label = np.asarray(label)))
-        
         
         img, label = self.transforms((img, label)) # Normalization
         #label = torch.from_numpy(label.copy()).long() # convert to tensor
@@ -185,12 +164,14 @@ class IddDataset(Dataset):
         # create one-hot encoding
         
         label = torch.squeeze(label)
-        
-        #h, w = label.shape
-        #target = torch.zeros(self.n_class, h, w)
-        #for c in range(self.n_class):
-        #    target[c][c==label] = 1
-        return img, label
+        label = torch.squeeze(label)
+        h, w = label.shape
+        target = torch.zeros(self.n_class, h, w)
+        for c in range(self.n_class):
+           target[c][c==label] = 1
+
+        return img, target, label
+
     def classWeightCalculate(self):
         self.classWeight = defaultdict(int)
         for idx in tqdm(range(len(self.data)), desc="Loading..."):
@@ -200,6 +181,7 @@ class IddDataset(Dataset):
             for i in range(len(values)):
                 self.classWeight[values[i]] += counts[i]
         return self.classWeight
+
     def weightedLossCalculate(self):
         if self.weightLoss:
             return self.weightLoss
@@ -214,55 +196,5 @@ class IddDataset(Dataset):
         for i in range(maxKey):
             self.weightLoss.append(total/self.classWeight[i])
         return torch.tensor(np.array(self.weightLoss))
-
-
-# In[4]:
-
-
-Idd = IddDataset('train.csv')
-
-
-# In[13]:
-
-
-
-Idd.weightedLossCalculate()
-
-
-# In[5]:
-
-
-from PIL import Image
-import matplotlib.pyplot as plt
-trans = transforms.ToPILImage()
-#plt.imshow(trans((Idd[0][0])))
-print(Idd[0][1])
-
-
-# In[6]:
-
-
-dl = DataLoader(Idd, batch_size=16, num_workers=2)
-
-
-# In[7]:
-
-
-for i, (img, label) in enumerate(dl):
-    print(i)
-    #trans = transforms.ToPILImage()
-    #plt.imshow(trans(img[0]))
-    #plt.show()
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
 
 

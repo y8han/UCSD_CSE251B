@@ -2,7 +2,7 @@
 Image_size: (256, 480)
 
 #Leanring rate
-learning_rate: 0.01
+learning_rate: 0.005 (both transfer encoder and decoder)
 
 # Number of training samples per batch to be passed to network
 batch_size: 16

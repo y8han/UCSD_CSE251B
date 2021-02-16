@@ -1,29 +1,6 @@
 from torchvision import models
 import torch.nn as nn
 
-
-# def transfer_learning(n_class):
-#     model = models.vgg16(pretrained=True) # Use the VGG-16.
-#     # Although it didn’t record the lowest error, it is found to work
-#     # well for the task and was quicker to train than other models.
-#
-#     # Freeze model weights
-#     for param in model.parameters():
-#         param.requires_grad = False
-#
-#     # Parameters of newly constructed modules have requires_grad=True by default
-#     num_ftrs = model.fc.in_features
-#     model.fc = nn.Linear(num_ftrs, n_class) # the size of each output sample = n_class = 27
-#
-#
-#     # Move to GPU
-#     model = model.to('cuda')
-#     # Distribute across 2 GPUs
-#     model = nn.DataParallel(model)
-#
-#     criterion = nn.CrossEntropyLoss(ignore_index = n_class)
-#     optimizer = optim.Adam()
-
 class TransferModel(nn.Module):
 
     def __init__(self, n_class):

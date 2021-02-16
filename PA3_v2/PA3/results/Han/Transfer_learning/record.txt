@@ -1,0 +1,8 @@
+accuracy: 0.7427611333063253
+average IoU: 0.1877519937151534
+IoU (road): 0.7976411576518608
+IoU (sidewalk): -1
+IoU (car): 0.38567649473127913
+IoU (billboard): -1
+IoU (sky): 0.7698001543967048
+

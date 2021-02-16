@@ -11,65 +11,65 @@ class UNet(nn.Module):
     def __init__(self, num_classes):
         super(UNet, self).__init__()
         
-        self.layer1 = nn.Sequential(nn.Conv2d(3, 16, 3, padding=1), nn.ReLU(),
-                                    nn.Conv2d(16, 16, 3, padding=1), nn.ReLU()
+        self.layer1 = nn.Sequential(nn.Conv2d(3, 64, 3, padding=1), nn.ReLU(),
+                                    nn.Conv2d(64, 64, 3, padding=1), nn.ReLU()
                                     )
         # No pooling 
         
         self.layer2 = nn.Sequential(nn.MaxPool2d(2),
-                                    nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(),
-                                    nn.Conv2d(32, 32, 3, padding=1), nn.ReLU()
-                                    )
-        
-        # No pooling
-        
-        self.layer3 = nn.Sequential(nn.MaxPool2d(2),
-                                    nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(),
-                                    nn.Conv2d(64, 64, 3, padding=1), nn.ReLU()
-                                    )
-        # No pooling
-        
-        self.layer4 = nn.Sequential(nn.MaxPool2d(2),
                                     nn.Conv2d(64, 128, 3, padding=1), nn.ReLU(),
                                     nn.Conv2d(128, 128, 3, padding=1), nn.ReLU()
                                     )
         
         # No pooling
         
-        self.layer5 = nn.Sequential(nn.MaxPool2d(2),
+        self.layer3 = nn.Sequential(nn.MaxPool2d(2),
                                     nn.Conv2d(128, 256, 3, padding=1), nn.ReLU(),
                                     nn.Conv2d(256, 256, 3, padding=1), nn.ReLU()
+                                    )
+        # No pooling
+        
+        self.layer4 = nn.Sequential(nn.MaxPool2d(2),
+                                    nn.Conv2d(256, 512, 3, padding=1), nn.ReLU(),
+                                    nn.Conv2d(512, 512, 3, padding=1), nn.ReLU()
+                                    )
+        
+        # No pooling
+        
+        self.layer5 = nn.Sequential(nn.MaxPool2d(2),
+                                    nn.Conv2d(512, 1024, 3, padding=1), nn.ReLU(),
+                                    nn.Conv2d(1024, 1024, 3, padding=1), nn.ReLU()
                                     )
         
         # No pooling
         
         
-        self.deconv1 = nn.ConvTranspose2d(256, 128, 2, stride=2) 
+        self.deconv1 = nn.ConvTranspose2d(1024, 512, 2, stride=2) 
         
         # Standard 2x upsample
         
-        self.layer6 = nn.Sequential(nn.Conv2d(256, 128, 3, padding=1), nn.ReLU(),
+        self.layer6 = nn.Sequential(nn.Conv2d(1024, 512, 3, padding=1), nn.ReLU(),
+                                    nn.Conv2d(512, 512, 3, padding=1), nn.ReLU()
+                                    )
+        
+        self.deconv2 = nn.ConvTranspose2d(512, 256 , 2, stride=2)
+        
+        self.layer7 = nn.Sequential(nn.Conv2d(512, 256, 3, padding=1), nn.ReLU(),
+                                    nn.Conv2d(256, 256, 3, padding=1), nn.ReLU()
+                                    )
+        
+        self.deconv3 = nn.ConvTranspose2d(256, 128, 2, stride=2)
+        
+        self.layer8 = nn.Sequential(nn.Conv2d(256, 128, 3, padding=1), nn.ReLU(),
                                     nn.Conv2d(128, 128, 3, padding=1), nn.ReLU()
                                     )
         
-        self.deconv2 = nn.ConvTranspose2d(128, 64 , 2, stride=2)
+        self.deconv4 = nn.ConvTranspose2d(128, 64, 2, stride=2)
         
-        self.layer7 = nn.Sequential(nn.Conv2d(128, 64, 3, padding=1), nn.ReLU(),
-                                    nn.Conv2d(64, 64, 3, padding=1), nn.ReLU()
+        self.layer9 = nn.Sequential(nn.Conv2d(128, 64, 3, padding=1), nn.ReLU(),
+                                    nn.Conv2d(64, 64, 3, padding=1), nn.ReLU(),
                                     )
-        
-        self.deconv3 = nn.ConvTranspose2d(64, 32, 2, stride=2)
-        
-        self.layer8 = nn.Sequential(nn.Conv2d(64, 32, 3, padding=1), nn.ReLU(),
-                                    nn.Conv2d(32, 32, 3, padding=1), nn.ReLU()
-                                    )
-        
-        self.deconv4 = nn.ConvTranspose2d(32, 16, 2, stride=2)
-        
-        self.layer9 = nn.Sequential(nn.Conv2d(32, 16, 3, padding=1), nn.ReLU(),
-                                    nn.Conv2d(16, 16, 3, padding=1), nn.ReLU(),
-                                    )
-        self.layer10 = nn.Conv2d(16, num_classes, 1)
+        self.layer10 = nn.Conv2d(64, num_classes, 1)
 
     def forward(self, x):
         c1 = self.layer1(x) # of same size h, w, 16
@@ -88,12 +88,3 @@ class UNet(nn.Module):
         final = self.layer10(c9)
         # verify the output shape
         return final
-
-    
-
-
-# In[ ]:
-
-
-
-

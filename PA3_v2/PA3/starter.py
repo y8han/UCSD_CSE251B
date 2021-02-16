@@ -1,5 +1,6 @@
 from torchvision import utils
 from basic_fcn import *
+from transfer_model import *
 from dataloader import *
 from utils import *
 import torchvision
@@ -8,6 +9,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import time
 import os
+import sys
 
 # TODO: Some missing values are represented by '__'. You need to fill these up.
 Batch_size = 16
@@ -25,7 +27,8 @@ test_dataset = IddDataset(csv_file='test.csv', w = Width, h =Height)
 
 
 def init_weights(m):
-    if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+    # if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):  baseline model:train both encoder and decoder
+    if isinstance(m, nn.ConvTranspose2d):  #Transfer learning: only train decoder layers
         # Kernal parameters are learnable
         torch.nn.init.xavier_uniform_(m.weight.data)
         torch.nn.init.zeros_(m.bias.data)
@@ -42,7 +45,8 @@ criterion = torch.nn.CrossEntropyLoss(ignore_index = n_class)  # Choose an appro
 # TODO: ignore index out of boundry (0-26, but 27,28 may appear)
 # TODO: Update Weight of each class
 
-fcn_model = FCN(n_class = n_class)
+fcn_model = TransferModel(n_class = n_class)
+# fcn_model = FCN(n_class = n_class)  # baseline model
 fcn_model.apply(init_weights)
 
 optimizer = optim.Adam(fcn_model.parameters(), lr = 0.01)
@@ -103,7 +107,7 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
                 print("Train Set: epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
         TrainLoss.append(float(average_loss.cpu()) / index)
         print("Training: Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
-        accu, val_loss, Iou, targetIou = val(epoch + 1, use_gpu)
+        accu, val_loss, Iou, targetIou = val(epoch + 1, use_gpu, fcn_model)
         Accuracy_list.append(accu)
         ValLoss.append(val_loss)
         Iou_list.append(Iou)
@@ -145,8 +149,8 @@ def train(init_accu, use_gpu, InitioU, Init_tagretioU):
     ploIoU(Iou_list, TargetIou_list_0, TargetIou_list_2, TargetIou_list_9, TargetIou_list_17, TargetIou_list_25, param = "IoU", do_save_fig = True)
 
 
-def val(epoch, use_gpu):
-    fcn_model.eval() # Don't forget to put in eval mode !
+def val(epoch, use_gpu, model):
+    model.eval() # Don't forget to put in eval mode !
     #Complete this function - Calculate loss, accuracy and IoU for every epoch
     # Make sure to include a softmax after the output from your model
     ts = time.time()
@@ -165,7 +169,7 @@ def val(epoch, use_gpu):
             labels = Y.to('cuda')  # Move your labels onto the gpu
         else:
             inputs, labels = X, Y  # Unpack variables into inputs and labels
-        outputs = fcn_model.forward(inputs)
+        outputs = model.forward(inputs)
         loss = criterion(outputs, labels)
         num_accu = pixel_acc(outputs, labels, use_gpu)
         aver_iou = []
@@ -233,19 +237,17 @@ def val(epoch, use_gpu):
     print("Validation: Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
     # print("Validation Set: Pixel accuracy(Loss) at epoch {} is {}({})".format(epoch, Aver_accu, Aver_loss))
     return Aver_accu, Aver_loss, IoU, [TargetIoU_0, TargetIoU_2, TargetIoU_9, TargetIoU_17, TargetIoU_25]
-
-# No need to plot the curves on test dataset? (not mentioned in pdf)
-# def test():
-# 	fcn_model.eval()
-    #Complete this function - Calculate accuracy and IoU 
-    # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
     figure_save = './figures/'
     if not os.path.exists(figure_save):
         os.makedirs(figure_save)
-    Visualization = False
-    if Visualization: # Call the best model and find the segment image
+
+    # Training mode: set Visualization = False & Final_result = False
+    Visualization = sys.argv[1] # Call the best model and draw the semantic segment figure
+    Final_result = sys.argv[2]  # Call the best model and compute the final results on the validation model (accuracy, IoU)
+
+    if Visualization == 'true': # Call the best model and find the segment image
         # /datasets/cs251-wi21-A00-public/idd20kII/leftImg8bit/Images/334/frame5427_leftImg8bit.jpg,/datasets/cs251-wi21-A00-public/idd20kII/gtFine/Labels/334/frame5427_gtFine_labellevel3Ids.png (first image in test.csv)
         model_dict = torch.load('./best_model')
         X = test_dataset[0][0]
@@ -270,6 +272,18 @@ if __name__ == "__main__":
         img_resize = img.resize((1920, 1080))  #Resize to (1920, 1080)
         img_resize.save('./figures/semantic_segment.png')
         img_resize.show()
+
+    elif Final_result == 'true':
+        model_dict = torch.load('./best_model')
+        accu, loss, Iou, targetIou = val(epochs, use_gpu, model_dict)
+        print("accuracy: {}".format(accu))
+        print("average IoU: {}".format(Iou))
+        print("IoU (road): {}".format(targetIou[0]))
+        print("IoU (sidewalk): {}".format(targetIou[1]))
+        print("IoU (car): {}".format(targetIou[2]))
+        print("IoU (billboard): {}".format(targetIou[3]))
+        print("IoU (sky): {}".format(targetIou[4]))
+
     else:
-        accu, loss, Iou, targetIou = val(0, use_gpu)  # show the accuracy before training
+        accu, loss, Iou, targetIou = val(0, use_gpu, fcn_model)  # show the accuracy before training
         train(accu, use_gpu, Iou, targetIou)

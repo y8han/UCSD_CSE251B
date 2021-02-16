@@ -1,5 +1,6 @@
 from torchvision import utils
 from basic_fcn import *
+from transfer_model import *
 from dataloader import *
 from utils import *
 import torchvision
@@ -11,9 +12,9 @@ import os
 import sys
 
 # TODO: Some missing values are represented by '__'. You need to fill these up.
-Batch_size = 4
-Width = 512
-Height = 960
+Batch_size = 16
+Width = 256
+Height = 480
 train_dataset = IddDataset(csv_file='train.csv', w = Width, h = Height)
 batch_train = DataLoader(train_dataset, batch_size = Batch_size, num_workers = 4, shuffle = True)
 val_dataset = IddDataset(csv_file='val.csv', w = Width, h = Height)
@@ -26,7 +27,8 @@ test_dataset = IddDataset(csv_file='test.csv', w = Width, h =Height)
 
 
 def init_weights(m):
-    if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+    # if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):  baseline model:train both encoder and decoder
+    if isinstance(m, nn.ConvTranspose2d):  #Transfer learning: only train decoder layers
         # Kernal parameters are learnable
         torch.nn.init.xavier_uniform_(m.weight.data)
         torch.nn.init.zeros_(m.bias.data)
@@ -43,7 +45,8 @@ criterion = torch.nn.CrossEntropyLoss(ignore_index = n_class)  # Choose an appro
 # TODO: ignore index out of boundry (0-26, but 27,28 may appear)
 # TODO: Update Weight of each class
 
-fcn_model = FCN(n_class = n_class)
+fcn_model = TransferModel(n_class = n_class)
+# fcn_model = FCN(n_class = n_class)  # baseline model
 fcn_model.apply(init_weights)
 
 optimizer = optim.Adam(fcn_model.parameters(), lr = 0.01)
@@ -234,12 +237,6 @@ def val(epoch, use_gpu, model):
     print("Validation: Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
     # print("Validation Set: Pixel accuracy(Loss) at epoch {} is {}({})".format(epoch, Aver_accu, Aver_loss))
     return Aver_accu, Aver_loss, IoU, [TargetIoU_0, TargetIoU_2, TargetIoU_9, TargetIoU_17, TargetIoU_25]
-
-# No need to plot the curves on test dataset? (not mentioned in pdf)
-# def test():
-# 	fcn_model.eval()
-    #Complete this function - Calculate accuracy and IoU 
-    # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
     figure_save = './figures/'

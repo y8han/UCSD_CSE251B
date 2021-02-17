@@ -2,33 +2,33 @@
 
 Codes:
 
--basic_fcn.py
+- basic_fcn.py
 
--dataloader.py
+- dataloader.py
 
--starter.py
+- starter.py
 
--transfer_model.py
+- transfer_model.py
 
--unet.py
+- unet.py
 
--unet_starter.py
+- unet_starter.py
 
--utils.py
+- utils.py
 
--run.sh
+- run.sh
 
 Data:
 
--gtFine
+- gtFine
 
--leftImg8bit
+- leftImg8bit
 
--train.csv
+- train.csv
 
--test.csv
+- test.csv
 
--val.csv
+- val.csv
 
 ## Run
 

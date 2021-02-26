@@ -45,9 +45,8 @@ class Experiment(object):
         self.__model = get_model(config_data, self.__vocab)
 
         # TODO: Set these Criterion and Optimizers Correctly
-        self.__criterion = None
-        self.__optimizer = None
-
+        self.__criterion = torch.nn.CrossEntropyLoss()
+        self.__optimizer = torch.optim.Adam(self.__model.parameters(), lr = 0.01)
         self.__init_model()
 
         # Load Experiment Data if available
@@ -92,6 +91,7 @@ class Experiment(object):
         training_loss = 0
 
         for i, (images, captions, _) in enumerate(self.__train_loader):
+            
             raise NotImplementedError()
 
         return training_loss

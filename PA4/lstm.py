@@ -46,7 +46,9 @@ class LSTMDecoder(nn.Module):
         #captions_compact = self.linear_word2Embed(captions)
         captions_compact = self.wordEmbedded(captions)
         lstm_out, hc_out = self.lstm(captions_compact, hc_init)
+        #print(lstm_out.shape)
         final = self.linear_Embed2Word(lstm_out)
+        #print(final.shape)
         return final
         
         

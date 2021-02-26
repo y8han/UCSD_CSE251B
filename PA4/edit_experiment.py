@@ -90,8 +90,8 @@ class Experiment(object):
         for epoch in range(start_epoch, self.__epochs):  # loop over the dataset multiple times
             start_time = datetime.now()
             self.__current_epoch = epoch
-            train_loss = self.__train()
             val_loss = self.__val()
+            train_loss = self.__train()
             self.__record_stats(train_loss, val_loss)
             self.__log_epoch_stats(start_time)
             self.__save_model()
@@ -106,22 +106,28 @@ class Experiment(object):
             images = images.to('cuda')
             captions = captions.to('cuda')
             outputs = self.__model(images, captions)
+            outputs = torch.transpose(outputs, 1, 2)
             loss = self.__criterion(outputs, captions)
             loss.backward()
             self.__optimizer.step()
-            print(loss.item())
-        return training_loss
+            training_loss += loss.item()
+        #print(training_loss)
+        return training_loss/len(self.__train_loader)
 
     # TODO: Perform one Pass on the validation set and return loss value. You may also update your best model here.
     def __val(self):
         self.__model.eval()
         val_loss = 0
-
         with torch.no_grad():
             for i, (images, captions, _) in enumerate(self.__val_loader):
-                raise NotImplementedError()
-
-        return val_loss
+                images = images.to('cuda')
+                captions = captions.to('cuda')
+                outputs = self.__model(images, captions)
+                outputs = torch.transpose(outputs, 1, 2)
+                loss = self.__criterion(outputs, captions)
+                val_loss += loss.item()
+        #print(val_loss)
+        return val_loss/len(self.__val_loader)
 
     # TODO: Implement your test function here. Generate sample captions and evaluate loss and
     #  bleu scores using the best model. Use utility functions provided to you in caption_utils.

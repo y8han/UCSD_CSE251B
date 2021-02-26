@@ -9,18 +9,18 @@
     "images_root_dir": "./data/images/",
     "vocabulary_threshold": 2,
     "img_size": 224,
-    "batch_size": 64,
+    "batch_size": 128,
     "num_workers": 8
   },
   "experiment": {
     "num_epochs": 10,
-    "learning_rate": 5e-4
+    "learning_rate": 1e-5
   },
   "model": {
     "hidden_size": 512,
     "embedding_size": 300,
     "model_type": "LSTM",
-    "dropout": 0
+    "dropout": 0.3
   },
   "generation": {
     "max_length": 20,

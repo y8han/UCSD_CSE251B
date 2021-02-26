@@ -1,5 +1,6 @@
 ##Taken from https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/03-advanced/image_captioning/build_vocab.py
 import nltk
+nltk.download('punkt')
 from collections import Counter
 from pycocotools.coco import COCO
 import os, pickle, json, csv, copy

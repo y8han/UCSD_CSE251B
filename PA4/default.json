@@ -8,7 +8,7 @@
     "test_annotation_file_path": "./data/annotations/captions_val2014.json",
     "images_root_dir": "./data/images/",
     "vocabulary_threshold": 2,
-    "img_size": 256,
+    "img_size": 224,
     "batch_size": 64,
     "num_workers": 8
   },
@@ -19,7 +19,8 @@
   "model": {
     "hidden_size": 512,
     "embedding_size": 300,
-    "model_type": "LSTM"
+    "model_type": "LSTM",
+    "dropout": 0
   },
   "generation": {
     "max_length": 20,

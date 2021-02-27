@@ -13,14 +13,14 @@
     "num_workers": 8
   },
   "experiment": {
-    "num_epochs": 10,
+    "num_epochs": 1,
     "learning_rate": 1e-5
   },
   "model": {
     "hidden_size": 512,
     "embedding_size": 300,
     "model_type": "LSTM",
-    "dropout": 0.3
+    "dropout": 0
   },
   "generation": {
     "max_length": 20,

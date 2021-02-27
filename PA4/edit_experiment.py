@@ -111,7 +111,7 @@ class Experiment(object):
             loss.backward()
             self.__optimizer.step()
             training_loss += loss.item()
-        #print(training_loss)
+            print(loss)
         return training_loss/len(self.__train_loader)
 
     # TODO: Perform one Pass on the validation set and return loss value. You may also update your best model here.
@@ -140,6 +140,11 @@ class Experiment(object):
 
         with torch.no_grad():
             for iter, (images, captions, img_ids) in enumerate(self.__test_loader):
+                images = images.to('cuda')
+                output = self.__model.generateCaption(images)
+                for i in range(output.shape[0]):
+                    print(output[i], output[i].shape)
+                    print(self.__vocab[captions[i]], self.__vocab[output[i]])
                 raise NotImplementedError()
 
         result_str = "Test Performance: Loss: {}, Perplexity: {}, Bleu1: {}, Bleu4: {}".format(test_loss,

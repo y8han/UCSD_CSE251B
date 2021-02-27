@@ -54,24 +54,23 @@ class LSTMDecoder(nn.Module):
         return final
     def generateCaption(self, feature, stochastic=False):
         initial_input = torch.ones((feature.shape[0], 1)).long().to('cuda')
-        
         #torch.tensor(1).to('cuda') # this is the '<start>'
         lstm_input = self.wordEmbedded(initial_input)
         feature = torch.unsqueeze(feature, 0)
         hc_states = (feature, feature)
         res = []
         for i in range(self.max_length):
-            print(lstm_input.shape)
+            #print(lstm_input.shape)
             lstm_output, hc_states = self.lstm(lstm_input, hc_states)
             lstm_final_word = self.linear_Embed2Word(lstm_output)
-            print(lstm_final_word.shape)
+            #print(lstm_final_word.shape)
             lstm_final_word = lstm_final_word.squeeze()
             _, predicted = lstm_final_word.max(1)
-            print(predicted.shape, predicted)
+            #print(predicted.shape, predicted)
             res.append(predicted)
             inputs = self.wordEmbedded(predicted)
         res = torch.stack(res, 1)
-        print(res.shape)
+        #print(res.shape)
         return res
         
 class ResLSTM(nn.Module):

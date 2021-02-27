@@ -17,5 +17,6 @@ if __name__ == "__main__":
 
     print("Running Experiment: ", exp_name)
     exp = Experiment(exp_name)
+    exp.test()
     exp.run()
     exp.test()

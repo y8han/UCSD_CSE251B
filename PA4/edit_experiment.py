@@ -22,7 +22,7 @@ from file_utils import *
 from model_factory import get_model
 
 
-# In[ ]:
+# In[1]:
 
 
 
@@ -47,6 +47,7 @@ class Experiment(object):
         # Setup Experiment
         self.__generation_config = config_data['generation']
         self.__epochs = config_data['experiment']['num_epochs']
+        self.__learningrate = config_data['experiment']['learning_rate']
         self.__current_epoch = 0
         self.__training_losses = []
         self.__val_losses = []
@@ -57,7 +58,7 @@ class Experiment(object):
 
         # TODO: Set these Criterion and Optimizers Correctly
         self.__criterion = torch.nn.CrossEntropyLoss()
-        self.__optimizer = torch.optim.Adam(self.__model.parameters(), lr = 0.01)
+        self.__optimizer = torch.optim.Adam(self.__model.parameters(), lr = self.__learningrate)
         self.__init_model()
 
         # Load Experiment Data if available
@@ -111,7 +112,7 @@ class Experiment(object):
             loss.backward()
             self.__optimizer.step()
             training_loss += loss.item()
-            print(loss)
+            #print(loss)
         return training_loss/len(self.__train_loader)
 
     # TODO: Perform one Pass on the validation set and return loss value. You may also update your best model here.
@@ -128,31 +129,44 @@ class Experiment(object):
                 val_loss += loss.item()
         #print(val_loss)
         return val_loss/len(self.__val_loader)
-
+    def stripPadding(self, lst):
+        res = []
+        for i in lst:
+            if i <= 3:
+                if i == 2:
+                    break
+                continue
+            else:
+                res.append(i)
+        return res
     # TODO: Implement your test function here. Generate sample captions and evaluate loss and
     #  bleu scores using the best model. Use utility functions provided to you in caption_utils.
     #  Note than you'll need image_ids and COCO object in this case to fetch all captions to generate bleu scores.
     def test(self):
         self.__model.eval()
         test_loss = 0
-        bleu1 = 0
-        bleu4 = 0
+        bleu1_score = []
+        bleu4_score = []
 
         with torch.no_grad():
             for iter, (images, captions, img_ids) in enumerate(self.__test_loader):
                 images = images.to('cuda')
-                output = self.__model.generateCaption(images)
-                for i in range(output.shape[0]):
-                    print(output[i], output[i].shape)
-                    print(self.__vocab[captions[i]], self.__vocab[output[i]])
-                raise NotImplementedError()
+                outputs = self.__model.generateCaption(images)
+                for i in range(outputs.shape[0]):
+                    #print(output[i], output[i].shape)
+                    output = self.__vocab.ids2words(self.stripPadding(outputs[i].tolist()))
+                    caption = self.__vocab.ids2words(self.stripPadding(captions[i].tolist()))
+                    #print(output, caption)
+                    bleu1_score.append(bleu1(caption, output))
+                    bleu4_score.append(bleu4(caption, output))
+                    #print(bleu1_score, sum(bleu1_score)/len(bleu1_score), sum(bleu4_score)/len(bleu4_score))
+                    #print(self.__vocab.idx2word[captions[i]], self.__vocab[output[i]])
+                #raise NotImplementedError()
 
-        result_str = "Test Performance: Loss: {}, Perplexity: {}, Bleu1: {}, Bleu4: {}".format(test_loss,
-                                                                                               bleu1,
-                                                                                               bleu4)
+        result_str = "Test Performance: Loss: {}, Bleu1: {}, Bleu4: {}".format(test_loss, sum(bleu1_score)/len(bleu1_score), sum(bleu4_score)/len(bleu4_score))
         self.__log(result_str)
 
-        return test_loss, bleu1, bleu4
+        return test_loss, sum(bleu1_score)/len(bleu1_score), sum(bleu4_score)/len(bleu4_score)
 
     def __save_model(self):
         root_model_path = os.path.join(self.__experiment_dir, 'latest_model.pt')
@@ -196,4 +210,10 @@ class Experiment(object):
         plt.title(self.__name + " Stats Plot")
         plt.savefig(os.path.join(self.__experiment_dir, "stat_plot.png"))
         plt.show()
+
+
+# In[ ]:
+
+
+
 

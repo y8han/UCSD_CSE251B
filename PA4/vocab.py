@@ -28,7 +28,12 @@ class Vocabulary(object):
 
     def __len__(self):
         return len(self.word2idx)
-
+    
+    def ids2words(self, ids):
+        res = []
+        for i in range(len(ids)):
+            res.append(self.idx2word[int(ids[i])])
+        return res
 
 def load_vocab(json, threshold):
     if os.path.isfile('savedVocab'):
@@ -62,10 +67,10 @@ def build_vocab(json, threshold):
 
     # Create a vocab wrapper and add some special tokens.
     vocab = Vocabulary()
-    vocab.add_word('<pad>')
-    vocab.add_word('<start>')
-    vocab.add_word('<end>')
-    vocab.add_word('<unk>')
+    vocab.add_word('<pad>') # 0
+    vocab.add_word('<start>') # 1
+    vocab.add_word('<end>') # 2
+    vocab.add_word('<unk>') # 3
 
     # Add the words to the vocabulary.
     for i, word in enumerate(words):

@@ -1,4 +1,4 @@
-rm -rf experiment_data/
+rm -rf experiment_data
 echo Cleared
 jupyter nbconvert --to script lstm.ipynb
 jupyter nbconvert --to script edit_experiment.ipynb

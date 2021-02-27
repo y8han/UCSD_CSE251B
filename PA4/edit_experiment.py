@@ -58,7 +58,7 @@ class Experiment(object):
 
         # TODO: Set these Criterion and Optimizers Correctly
         self.__criterion = torch.nn.CrossEntropyLoss()
-        self.__optimizer = torch.optim.Adam(self.__model.parameters(), lr = self.__learningrate)
+        self.__optimizer = torch.optim.Adam(self.__model.parameters(), lr = self.__learningrate,weight_decay=0.1)
         self.__init_model()
 
         # Load Experiment Data if available
@@ -91,8 +91,8 @@ class Experiment(object):
         for epoch in range(start_epoch, self.__epochs):  # loop over the dataset multiple times
             start_time = datetime.now()
             self.__current_epoch = epoch
-            val_loss = self.__val()
             train_loss = self.__train()
+            val_loss = self.__val()
             self.__record_stats(train_loss, val_loss)
             self.__log_epoch_stats(start_time)
             self.__save_model()
@@ -108,6 +108,8 @@ class Experiment(object):
             captions = captions.to('cuda')
             outputs = self.__model(images, captions)
             outputs = torch.transpose(outputs, 1, 2)
+            captions = captions[:,1:]
+            outputs = outputs[:, :, :-1]
             loss = self.__criterion(outputs, captions)
             loss.backward()
             self.__optimizer.step()
@@ -125,6 +127,8 @@ class Experiment(object):
                 captions = captions.to('cuda')
                 outputs = self.__model(images, captions)
                 outputs = torch.transpose(outputs, 1, 2)
+                captions = captions[:,1:]
+                outputs = outputs[:, :, :-1]
                 loss = self.__criterion(outputs, captions)
                 val_loss += loss.item()
         #print(val_loss)
@@ -138,6 +142,7 @@ class Experiment(object):
                 continue
             else:
                 res.append(i)
+        #print(res)
         return res
     # TODO: Implement your test function here. Generate sample captions and evaluate loss and
     #  bleu scores using the best model. Use utility functions provided to you in caption_utils.
@@ -153,10 +158,14 @@ class Experiment(object):
                 images = images.to('cuda')
                 outputs = self.__model.generateCaption(images)
                 for i in range(outputs.shape[0]):
-                    #print(output[i], output[i].shape)
+                    #print(outputs[i], outputs[i].shape)
+                    references = self.__coco_test.imgToAnns[img_ids[i]]
+                    caption = []
+                    for reference in references:
+                        caption.append(reference['caption'].split())
                     output = self.__vocab.ids2words(self.stripPadding(outputs[i].tolist()))
-                    caption = self.__vocab.ids2words(self.stripPadding(captions[i].tolist()))
-                    #print(output, caption)
+                    #caption = self.__vocab.ids2words(self.stripPadding(captions[i].tolist()))
+                    print(output, caption)
                     bleu1_score.append(bleu1(caption, output))
                     bleu4_score.append(bleu4(caption, output))
                     #print(bleu1_score, sum(bleu1_score)/len(bleu1_score), sum(bleu4_score)/len(bleu4_score))

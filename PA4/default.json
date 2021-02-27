@@ -8,13 +8,13 @@
     "test_annotation_file_path": "./data/annotations/captions_val2014.json",
     "images_root_dir": "./data/images/",
     "vocabulary_threshold": 2,
-    "img_size": 224,
+    "img_size": 256,
     "batch_size": 128,
     "num_workers": 8
   },
   "experiment": {
-    "num_epochs": 2,
-    "learning_rate": 1e-5
+    "num_epochs": 15,
+    "learning_rate": 5e-4
   },
   "model": {
     "hidden_size": 512,

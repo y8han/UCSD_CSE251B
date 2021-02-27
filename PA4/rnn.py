@@ -42,10 +42,10 @@ class RNNDecoder(nn.Module):
     def forward(self, captions, features):
         # captions are of shape of BatchSize * sequenceLength * 1 => 0 <= n < vacab_size
         features = torch.unsqueeze(features, 0)
-        hc_init = (features, features)
+        h_init = features
         #captions_compact = self.linear_word2Embed(captions)
         captions_compact = self.wordEmbedded(captions)
-        rnn_out, hc_out = self.rnn(captions_compact, hc_init)
+        rnn_out, h_out = self.rnn(captions_compact, h_init)
         #print(lstm_out.shape)
         final = self.linear_Embed2Word(rnn_out)
         #print(final.shape)

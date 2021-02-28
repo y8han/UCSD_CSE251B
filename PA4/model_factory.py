@@ -10,11 +10,12 @@ def get_model(config_data, vocab_size):
     embedding_size = int(config_data['model']['embedding_size'])
     model_type = str(config_data['model']['model_type'])
     dropout = float(config_data['model']['dropout'])
+    temperature = config_data['generation']['temperature']
+    max_length = config_data['generation']['max_length']
     model = None
     # You may add more parameters if you want
     if model_type == 'LSTM':
-        model = lstm.ResLSTM(hidden_size, embedding_size, dropout, vocab_size)
-        
+        model = lstm.ResLSTM(hidden_size, embedding_size, dropout, vocab_size, temperature, max_length)
     else:
         raise NotImplementedError("Model Factory Not Implemented")
     return model

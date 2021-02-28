@@ -64,7 +64,7 @@ class Experiment(object):
 
         # Load Experiment Data if available
         self.__load_experiment()
-        
+
         self.__early_stop_mark = 0
         self.__early_stop= config_data['experiment']['early_stop']
         if len(self.__val_losses) == 0:
@@ -103,7 +103,7 @@ class Experiment(object):
             val_loss = self.__val()
             self.__record_stats(train_loss, val_loss)
             self.__log_epoch_stats(start_time)
-            
+
             if val_loss > self.__best_val_loss:
                 self.__early_stop_mark += 1
                 if self.__early_stop_mark >= self.__early_stop and self.__early_stop != 0:
@@ -180,7 +180,7 @@ class Experiment(object):
                     for reference in references:
                         caption.append(reference['caption'].split())
                     output = self.__vocab.ids2words(self.stripPadding(outputs[i].tolist()))
-                    
+
                     #print(output, caption)
                     bleu1_score.append(bleu1(caption, output))
                     bleu4_score.append(bleu4(caption, output))
@@ -191,7 +191,7 @@ class Experiment(object):
 
         result_str = "Test Performance: Loss: {}, Bleu1: {}, Bleu4: {}".format(sum(test_loss)/len(test_loss), sum(bleu1_score)/len(bleu1_score), sum(bleu4_score)/len(bleu4_score))
         self.__log(result_str)
-        return test_loss, sum(bleu1_score)/len(bleu1_score), sum(bleu4_score)/len(bleu4_score)
+        return sum(test_loss)/len(test_loss), sum(bleu1_score)/len(bleu1_score), sum(bleu4_score)/len(bleu4_score)
 
     def __save_model(self):
         root_model_path = os.path.join(self.__experiment_dir, 'latest_model.pt')
@@ -238,7 +238,3 @@ class Experiment(object):
 
 
 # In[ ]:
-
-
-
-

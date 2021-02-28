@@ -184,6 +184,8 @@ class Experiment(object):
                     #print(output, caption)
                     bleu1_score.append(bleu1(caption, output))
                     bleu4_score.append(bleu4(caption, output))
+		ouputs = self.__model(images, captions)
+		outputs = torch.transpose(outputs, 1, 2)
                 captions = captions[:,1:]
                 outputs = outputs[:, :, :-1]
                 loss = self.__criterion(outputs, captions)
@@ -209,7 +211,7 @@ class Experiment(object):
         write_to_file_in_dir(self.__experiment_dir, 'val_losses.txt', self.__val_losses)
 
     def __log(self, log_str, file_name=None):
-        print(log_str)
+        print(log_str)temperature
         log_to_file_in_dir(self.__experiment_dir, 'all.log', log_str)
         if file_name is not None:
             log_to_file_in_dir(self.__experiment_dir, file_name, log_str)

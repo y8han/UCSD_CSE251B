@@ -6,6 +6,7 @@
 import torch
 import torch.nn as nn
 from torchvision import models
+import torch.utils.data as data
 from constants import *
 
 
@@ -29,16 +30,20 @@ class ResNetEncoder(nn.Module):
         return features
     
 class RNNDecoder(nn.Module):
-    def __init__(self, word_embedding_size, hidden_size, dropout, vocab_size):
+    def __init__(self, word_embedding_size, hidden_size, dropout, vocab_size, temperature, max_length = 25):
         super().__init__()
         self.input_size = word_embedding_size
         self.hidden_size= hidden_size
         self.dropout = dropout
         self.vocab_size = vocab_size
+        self.temperature = temperature
+        self.max_length = max_length
         self.wordEmbedded = nn.Embedding(vocab_size, word_embedding_size)
         self.linear_Embed2Word = nn.Linear(in_features = self.hidden_size, out_features = self.vocab_size, bias = True)
         self.rnn = nn.RNN(self.input_size, self.hidden_size, batch_first=True, dropout=dropout)
         #self.softmax = nn.functional.softmax()
+        self.caption_softmax = nn.Softmax(dim=1)
+        
     def forward(self, captions, features):
         # captions are of shape of BatchSize * sequenceLength * 1 => 0 <= n < vacab_size
         features = torch.unsqueeze(features, 0)
@@ -50,20 +55,51 @@ class RNNDecoder(nn.Module):
         final = self.linear_Embed2Word(rnn_out)
         #print(final.shape)
         return final
+    
+    def generateCaption(self, feature, stochastic=False):
+        initial_input = torch.ones((feature.shape[0], 1)).long().to('cuda')
+        #torch.tensor(1).to('cuda') # this is the '<start>'
+        captions_compact = self.wordEmbedded(initial_input)
+        feature = torch.unsqueeze(feature, 0)
+        h_init = feature
+        res = []
+        for i in range(self.max_length):
+            #print(lstm_input.shape)
+            rnn_out, h_out = self.rnn(captions_compact, h_init)
+            final = self.linear_Embed2Word(rnn_out)
+            #print(lstm_final_word.shape)
+            final = final.squeeze()
+            if stochastic:
+                final = self.caption_softmax(final/self.temperature)
+                predicted = data.WeightedRandomSampler(weights=final, num_samples = 1, replacement=False)
+                predicted = torch.tensor(list(predicted)).long().to('cuda')
+                predicted = torch.squeeze(predicted)
+            else:
+                _, predicted = final.max(1)
+            #print(predicted.shape, predicted)
+            res.append(predicted)
+            captions_compact = self.wordEmbedded(predicted)
+            captions_compact = torch.unsqueeze(captions_compact, 1)
+        res = torch.stack(res, 1)
+        #print(res.shape)
+        return res
         
         
 class ResRNN(nn.Module):
-    def __init__(self, hidden_size, word_embedding_size, dropout, vocab_size):
+    def __init__(self, hidden_size, word_embedding_size, dropout, vocab_size, temperature, max_length):
         super().__init__()
         self.encoder = ResNetEncoder(hidden_size)
-        self.decoder = RNNDecoder(word_embedding_size, hidden_size, dropout, vocab_size)        
+        self.decoder = RNNDecoder(word_embedding_size, hidden_size, dropout, vocab_size, temperature, max_length)        
         
     def forward(self, images, captions):
         features = self.encoder(images)
         final = self.decoder(captions, features)
         return final
     
-
+    def generateCaption(self, images, stochastic):
+        features = self.encoder(images)
+        final = self.decoder.generateCaption(features, stochastic)
+        return final
 
 # In[ ]:
 

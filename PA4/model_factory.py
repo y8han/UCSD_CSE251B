@@ -4,6 +4,7 @@
 # Fall 2020
 ################################################################################
 import lstm
+import rnn
 # Build and return the model here based on the configuration.
 def get_model(config_data, vocab_size):
     hidden_size = int(config_data['model']['hidden_size'])
@@ -16,6 +17,7 @@ def get_model(config_data, vocab_size):
     # You may add more parameters if you want
     if model_type == 'LSTM':
         model = lstm.ResLSTM(hidden_size, embedding_size, dropout, vocab_size, temperature, max_length)
-    else:
+    elif model_type == 'RNN':
+	model = rnn.ResRNN(hidden_size, embedding_size, dropout, vocab_size, temperature, max_length)
         raise NotImplementedError("Model Factory Not Implemented")
     return model

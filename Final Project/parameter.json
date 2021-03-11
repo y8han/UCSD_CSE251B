@@ -11,9 +11,9 @@
     "early_stop": 3
   },
   "cycleGAN": {
-    "nc": 3, # Number of channels in the training images. For color images this is 3
-    "nz": 100, # Size of z latent vector (i.e. size of generator input)
-    "ngf": 64, # Size of feature maps in generator
-    "ngpu": 1, # Number of GPUs available. Use 0 for CPU mode.
+    "nc": 3, 
+    "nz": 100, 
+    "ngf": 64,
+    "ngpu": 1,
   }
 }

@@ -1,0 +1,13 @@
+{
+  "experiment_name": "default_experiment",
+  "dataset": {
+    "data_location":"data/"
+  },
+  "experiment": {
+    "num_worker": 2,
+    "batch_size":32,
+    "num_epochs": 15,
+    "learning_rate": 5e-4,
+    "early_stop": 3
+  }
+}

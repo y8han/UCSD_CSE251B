@@ -8,9 +8,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import os
+from tqdm import tqdm
 from datetime import datetime
 from file_utils import read_file_in_dir
 from dataset_factory import get_datasets
+from model_factory import get_model
 
 
 # In[2]:
@@ -41,7 +43,8 @@ class Experiment(object):
 
         # TODO: Set these Criterion and Optimizers Correctly
         self.__optimizer = torch.optim.Adam(self.__model.parameters(), lr = 0.01)
-        self.__model = self.__model.cuda().float()
+        #if torch.cuda.is_available():
+            #self.__model = self.__model.cuda().float()
         # Load Experiment Data if available
         self.__load_experiment()
         
@@ -60,20 +63,22 @@ class Experiment(object):
 
     def run(self):
         start_epoch = self.__current_epoch
-        for epoch in range(start_epoch, self.__epochs):  # loop over the dataset multiple times
+        for epoch in tqdm(range(start_epoch, self.__epochs)):  # loop over the dataset multiple times
             start_time = datetime.now()
+            print(start_time)
             self.__current_epoch = epoch
             train_loss = self.__train()
-            val_loss = self.__val()
-            self.__record_stats(train_loss, val_loss)
+            #val_loss = self.__val()
+            #self.__record_stats(train_loss, val_loss)
+            print(train_loss)
             self.__log_epoch_stats(start_time)
             self.__save_model()
 
     def __train(self):
         self.__model.train()
         training_loss = 0
-        for i, (images, captions, _) in enumerate(self.__train_loader):
-            raise NotImplementedError()
+        for i, data in enumerate(self.__train_loader):
+            training_loss = self.__model.update(data)
         return training_loss
 
     def __val(self):
@@ -154,6 +159,18 @@ class Experiment(object):
 
 if __name__ == "__main__":
     a = Experiment("parameter")
+
+
+# In[4]:
+
+
+print(a)
+
+
+# In[5]:
+
+
+a.run()
 
 
 # In[ ]:

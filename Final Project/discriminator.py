@@ -91,8 +91,6 @@ class NLayerDiscriminator(nn.Module):
 
         sequence += [nn.Conv2d(ndf * (2 ** (n_layers)), 1, kernel_size=kw, stride=1, padding=padw)]
 
-        if use_sigmoid:
-            sequence += [nn.Sigmoid()]
 
         self.model = nn.Sequential(*sequence)
 

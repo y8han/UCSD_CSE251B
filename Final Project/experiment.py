@@ -37,7 +37,7 @@ class Experiment(object):
         self.__val_losses = []
         self.__best_model = None  # Save your best model in this field and use this in test method.
         # Init Model
-        self.__model = get_model(config_data, self.__vocab)
+        self.__model = get_model(config_data)
 
         # TODO: Set these Criterion and Optimizers Correctly
         self.__optimizer = torch.optim.Adam(self.__model.parameters(), lr = 0.01)

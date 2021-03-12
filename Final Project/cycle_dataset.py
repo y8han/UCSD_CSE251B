@@ -49,7 +49,7 @@ class CycleDataset(data.Dataset):
         B_path = self.B_paths[random.randint(0, self.B_size -1)]
         A_img = Image.open(A_path).convert('RGB')
         B_img = Image.open(B_path).convert('RGB')
-        return {'A': A_img, 'B': B_img, 'A_paths': A_path, 'B_paths': B_path}
+        return {'A': A_img, 'B': B_img, 'A_path': A_path, 'B_path': B_path}
     def __len__(self):
         return max(self.A_size, self.B_size)
 

@@ -26,7 +26,7 @@ def weights_init(m):
         m.bias.data.fill_(0)
 
 
-# In[3]:
+# In[6]:
 
 
 def define_G(input_nc, output_nc, ngf, which_model_netG, norm, use_dropout=False):
@@ -57,7 +57,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm, use_dropout=False
     return netG
 
 
-# In[4]:
+# In[7]:
 
 
 # Defines the ResNet generator

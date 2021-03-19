@@ -6,8 +6,8 @@
   "experiment": {
     "num_worker": 2,
     "batch_size":32,
-    "num_epochs": 300,
-    "learning_rate": 5e-4,
+    "num_epochs":40,
+    "learning_rate": 2e-4,
     "early_stop": 3
   },
   "cycleGAN": {
@@ -15,6 +15,6 @@
     "nz": 100, 
     "ngf": 64,
     "ngpu": 1,
-    "lr": 0.01
+    "lr": 2e-4
   }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import torch
@@ -11,6 +11,8 @@ import os
 import random
 import numpy as np
 from PIL import Image
+from file_utils import read_file_in_dir
+import matplotlib.pyplot as plt
 
 
 IMG_EXTENSIONS = [
@@ -57,11 +59,23 @@ class CycleDataset(data.Dataset):
         return max(self.A_size, self.B_size)
 
 
-# In[50]:
+# In[8]:
 
 
 if __name__ == "__main__" :
+    config = read_file_in_dir('./', 'parameter.json')
     data = CycleDataset(config, "train")
+    real_a = data[1]['A'].cpu().float().numpy()
+    print(real_a.min(), np.mean(real_a), np.std(real_a))
+    real_a = (np.transpose(real_a, (1,2,0)) + 1)/2.0 * 255.0
+    real_a = real_a.astype(int)
+    plt.imshow(real_a)
+    plt.show()
+    real_b = data[0]['B'].cpu().float().numpy()
+    real_b = (np.transpose(real_b, (1,2,0)) + 1)/2.0 * 255.0
+    real_b = real_b.astype(int)
+    plt.imshow(real_b)
+    plt.show()
     print(data[0])
 
 

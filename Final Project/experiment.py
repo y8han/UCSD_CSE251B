@@ -42,7 +42,7 @@ class Experiment(object):
         self.__model = get_model(config_data)
 
         # TODO: Set these Criterion and Optimizers Correctly
-        self.__optimizer = torch.optim.Adam(self.__model.parameters(), lr = 0.01)
+        #self.__optimizer = torch.optim.Adam(self.__model.parameters(), lr = 0.01)
         #if torch.cuda.is_available():
             #self.__model = self.__model.cuda().float()
         # Load Experiment Data if available
@@ -57,7 +57,7 @@ class Experiment(object):
 
             state_dict = torch.load(os.path.join(self.__experiment_dir, 'latest_model.pt'))
             self.__model.load_state_dict(state_dict['model'])
-            self.__optimizer.load_state_dict(state_dict['optimizer'])
+            self.__model.__optimizer.load_state_dict(state_dict['optimizer'])
         else:
             os.makedirs(self.__experiment_dir)
 
@@ -68,18 +68,6 @@ class Experiment(object):
             print(start_time)
             self.__current_epoch = epoch
             train_loss = self.__train()
-            if epoch == 1:
-                self.__model.lambda__ = 10
-            if epoch == 50:
-                self.__model.lambda__ = 7
-            if epoch == 100:
-                self.__model.lambda__ = 5
-            if epoch == 150:
-                self.__model.lambda__ = 3
-            if epoch == 200:
-                self.__model.lambda__ = 1
-            if epoch == 250:
-                self.__model.lambda__ = 0.5
             #val_loss = self.__val()
             #self.__record_stats(train_loss, val_loss)
             print(train_loss)
@@ -90,6 +78,17 @@ class Experiment(object):
         self.__model.train()
         training_loss = 0
         for i, data in enumerate(self.__train_loader):
+            print("First in minibatch")
+            real_a = data['A'][0].cpu().float().numpy()
+            real_a = (np.transpose(real_a, (1,2,0)) + 1)/2.0 * 255.0
+            real_a = real_a.astype(int)
+            #plt.imshow(real_a)
+            #plt.show()
+            real_b = data['B'][0].cpu().float().numpy()
+            real_b = (np.transpose(real_b, (1,2,0)) + 1)/2.0 * 255.0
+            real_b = real_b.astype(int)
+            #plt.imshow(real_b)
+            #plt.show()
             training_loss = self.__model.update(data)
         return training_loss
 
@@ -120,7 +119,7 @@ class Experiment(object):
     def __save_model(self):
         root_model_path = os.path.join(self.__experiment_dir, 'latest_model.pt')
         model_dict = self.__model.state_dict()
-        state_dict = {'model': model_dict, 'optimizer': self.__optimizer.state_dict()}
+        state_dict = {'model': model_dict}
         torch.save(state_dict, root_model_path)
 
     def __record_stats(self, train_loss, val_loss):
@@ -173,13 +172,13 @@ if __name__ == "__main__":
     a = Experiment("parameter")
 
 
-# In[4]:
+# In[ ]:
 
 
 print(a)
 
 
-# In[5]:
+# In[ ]:
 
 
 a.run()

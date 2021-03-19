@@ -68,10 +68,22 @@ class Experiment(object):
             print(start_time)
             self.__current_epoch = epoch
             train_loss = self.__train()
+            if epoch == 1:
+                self.__model.lambda__ = 10
+            if epoch == 50:
+                self.__model.lambda__ = 7
+            if epoch == 100:
+                self.__model.lambda__ = 5
+            if epoch == 150:
+                self.__model.lambda__ = 3
+            if epoch == 200:
+                self.__model.lambda__ = 1
+            if epoch == 250:
+                self.__model.lambda__ = 0.5
             #val_loss = self.__val()
             #self.__record_stats(train_loss, val_loss)
             print(train_loss)
-            self.__log_epoch_stats(start_time)
+            #self.__log_epoch_stats(start_time)
             self.__save_model()
 
     def __train(self):

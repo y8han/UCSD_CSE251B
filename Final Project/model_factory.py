@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[4]:
 
 
 import torch
@@ -11,8 +11,9 @@ import torch.utils.data as data
 import itertools
 #from constants import *
 from file_utils import read_file_in_dir
-from generator import define_G
-from discriminator import define_D
+#from generator import define_G
+#from discriminator import define_D
+import networks
 
 class CycleGAN(nn.Module):
     
@@ -27,13 +28,15 @@ class CycleGAN(nn.Module):
         
         self.register_buffer('real_label', torch.tensor(1.0))
         self.register_buffer('fake_label', torch.tensor(0.0))
+        self.lambda__ = 10
         
         
-        self.model_G_A = define_G(3, 3, 64, 'unet_128', 'instance', use_dropout=True)
-        self.model_G_B = define_G(3, 3, 64, 'unet_128', 'instance', use_dropout=True)
-    
-        self.model_D_A = define_D(3, 64, n_layers_D=3, use_sigmoid=True)
-        self.model_D_B = define_D(3, 64, n_layers_D=3, use_sigmoid=True)
+        self.model_G_A = networks.define_G(3, 3, 64, 'unet_128', gpu_ids=[0])
+        #define_G(3, 3, 64, 'unet_128', 'instance', use_dropout=True)
+        self.model_G_B =networks.define_G(3, 3, 64, 'unet_128', gpu_ids=[0])
+        
+        self.model_D_A = networks.define_D(3, 64, 'basic', 3, gpu_ids=[0])
+        self.model_D_B = networks.define_D(3, 64, 'basic', 3, gpu_ids=[0])
         
         # changes needed
         #torch.nn.init.xavier_uniform(self.model_G_A.weight.data)
@@ -66,34 +69,34 @@ class CycleGAN(nn.Module):
         self.recreate_B = self.model_G_B(self.fake_A)
     def basic_D_backward(self, model_D, real, fake):
         pred_real = model_D(real)
-        loss_D_real = self.criterionGAN(pred_real, self.real_label.expand_as(pred_real))
+        loss_D_real = self.criterionGAN(pred_real, self.real_label.expand_as(pred_real).to('cuda'))
         pred_fake = model_D(fake.detach())
-        loss_D_fake = self.criterionGAN(pred_fake, self.fake_label.expand_as(pred_fake))
+        loss_D_fake = self.criterionGAN(pred_fake, self.fake_label.expand_as(pred_fake).to('cuda'))
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5
         loss_D.backward()
         return loss_D
-    def D_A_backward(self, real, fake):
+    def D_A_backward(self):
         '''D_A is discriminate A'''
         self.loss_D_A = self.basic_D_backward(self.model_D_A, self.real_A, self.fake_A)
-    def D_B_backward(self, real, fake):
+    def D_B_backward(self):
         self.loss_D_B = self.basic_D_backward(self.model_D_B, self.real_B, self.fake_B)
     def backward_G(self):
         check_G_A = self.model_D_A(self.fake_A)
-        self.loss_G_A = self.criterionGAN(check_G_A,self.real_label.expand_as(check_G_A))
+        self.loss_G_A = self.criterionGAN(check_G_A,self.real_label.expand_as(check_G_A).to('cuda'))
         check_G_B = self.model_D_B(self.fake_B)
-        self.loss_G_B = self.criterionGAN(check_G_B,self.real_label.expand_as(check_G_B))
-        self.loss_cycle_A = self.criterionCycle(self.recreate_A, self.real_A) * 0.5
-        self.loss_cycle_B = self.criterionCycle(self.recreate_B, self.real_B) * 0.5
+        self.loss_G_B = self.criterionGAN(check_G_B,self.real_label.expand_as(check_G_B).to('cuda'))
+        self.loss_cycle_A = self.criterionCycle(self.recreate_A, self.real_A.to('cuda')) * self.lambda__
+        self.loss_cycle_B = self.criterionCycle(self.recreate_B, self.real_B.to('cuda')) * self.lambda__
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B
         self.loss_G.backward()
     def update(self, input_image):
         self.forward(input_image)
-        self.set_model_grad([self.model_D_A, sel.model_D_B], False)
+        self.set_model_grad([self.model_D_A, self.model_D_B], False)
         self.optimizerG.zero_grad()
         self.backward_G()
         self.optimizerG.step()
-        self.set_model_grad([self.model_D_A, sel.model_D_B], True)
+        self.set_model_grad([self.model_D_A, self.model_D_B], True)
         self.optimizerD.zero_grad()
         self.D_A_backward()
         self.D_B_backward()

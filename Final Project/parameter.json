@@ -6,7 +6,7 @@
   "experiment": {
     "num_worker": 2,
     "batch_size":32,
-    "num_epochs": 15,
+    "num_epochs": 300,
     "learning_rate": 5e-4,
     "early_stop": 3
   },

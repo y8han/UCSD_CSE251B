@@ -15,6 +15,7 @@ from file_utils import read_file_in_dir
 #from discriminator import define_D
 import networks
 import random
+import numpy as np
 
 
 # In[2]:
@@ -90,9 +91,9 @@ class CycleGAN(nn.Module):
         self.lambda__ = 10
         
         self.idt = 0.2
-        self.model_G_A = networks.define_G(3, 3, 64, 'unet_256', norm='instance',gpu_ids=[0])
+        self.model_G_A = networks.define_G(3, 3, 64, 'unet_128', norm='instance',gpu_ids=[0])
         #define_G(3, 3, 64, 'unet_128', 'instance', use_dropout=True)
-        self.model_G_B =networks.define_G(3, 3, 64, 'unet_256', norm='instance', gpu_ids=[0])
+        self.model_G_B =networks.define_G(3, 3, 64, 'unet_128', norm='instance', gpu_ids=[0])
         
         self.model_D_A = networks.define_D(3, 64, 'basic', 3, gpu_ids=[0])
         self.model_D_B = networks.define_D(3, 64, 'basic', 3, gpu_ids=[0])
@@ -100,10 +101,6 @@ class CycleGAN(nn.Module):
         self.fake_B_pool = ImagePool(50)
         
         # changes needed
-        #torch.nn.init.xavier_uniform(self.model_G_A.weight.data)
-        #torch.nn.init.xavier_uniform(self.model_G_B.weight)
-        #torch.nn.init.xavier_uniform(self.model_D_A.weight)
-        #torch.nn.init.xavier_uniform(self.model_D_B.weight)
         self.optimizerG = torch.optim.Adam(itertools.chain(self.model_G_A.parameters(), self.model_G_B.parameters()), lr=self.lr, betas = (0.5, 0.99))
         self.optimizerD = torch.optim.Adam(itertools.chain(self.model_D_A.parameters(), self.model_D_B.parameters()), lr=self.lr, betas = (0.5, 0.99))
         self.optimizer = []
@@ -121,15 +118,13 @@ class CycleGAN(nn.Module):
         
         #G_A(B)
         self.fake_A = self.model_G_A(self.real_B)
-        
         #G_B(A)
         self.fake_B = self.model_G_B(self.real_A)
-        
         #G_A(G_B(A))
         self.recreate_A = self.model_G_A(self.fake_B)
-        
         #G_B(G_A(B))
         self.recreate_B = self.model_G_B(self.fake_A)
+
     def basic_D_backward(self, model_D, real, fake):
         pred_real = model_D(real)
         loss_D_real = self.criterionGAN(pred_real, self.real_label.expand_as(pred_real).to('cuda'))
@@ -173,7 +168,8 @@ class CycleGAN(nn.Module):
         self.D_A_backward()
         self.D_B_backward()
         self.optimizerD.step()
-        return self.loss_D_A, self.loss_D_B, self.loss_G, self.loss_G_A, self.loss_G_B, self.loss_cycle_A, self.loss_cycle_B
+        return np.array([self.loss_D_A.data.cpu().float(), self.loss_D_B.data.cpu().float(), self.loss_G_A.data.cpu().float(), 
+                         self.loss_G_B.data.cpu().float(), self.loss_cycle_A.data.cpu().float(), self.loss_cycle_B.data.cpu().float()])
         
     def set_model_grad(self, nets, requires):
         for net in nets:

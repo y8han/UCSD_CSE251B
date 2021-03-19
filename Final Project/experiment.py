@@ -67,6 +67,8 @@ class Experiment(object):
             start_time = datetime.now()
             print(start_time)
             self.__current_epoch = epoch
+            if epoch >= 100:
+                self.__model.idt = 0.001
             train_loss = self.__train()
             #val_loss = self.__val()
             #self.__record_stats(train_loss, val_loss)
@@ -78,15 +80,15 @@ class Experiment(object):
         self.__model.train()
         training_loss = 0
         for i, data in enumerate(self.__train_loader):
-            print("First in minibatch")
-            real_a = data['A'][0].cpu().float().numpy()
-            real_a = (np.transpose(real_a, (1,2,0)) + 1)/2.0 * 255.0
-            real_a = real_a.astype(int)
+            #print("First in minibatch")
+            #real_a = data['A'][0].cpu().float().numpy()
+            #real_a = (np.transpose(real_a, (1,2,0)) + 1)/2.0 * 255.0
+            #real_a = real_a.astype(int)
             #plt.imshow(real_a)
             #plt.show()
-            real_b = data['B'][0].cpu().float().numpy()
-            real_b = (np.transpose(real_b, (1,2,0)) + 1)/2.0 * 255.0
-            real_b = real_b.astype(int)
+            #real_b = data['B'][0].cpu().float().numpy()
+            #real_b = (np.transpose(real_b, (1,2,0)) + 1)/2.0 * 255.0
+            #real_b = real_b.astype(int)
             #plt.imshow(real_b)
             #plt.show()
             training_loss = self.__model.update(data)

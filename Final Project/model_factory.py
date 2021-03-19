@@ -89,7 +89,7 @@ class CycleGAN(nn.Module):
         self.register_buffer('fake_label', torch.tensor(0.0))
         self.lambda__ = 10
         
-        
+        self.idt = 0.2
         self.model_G_A = networks.define_G(3, 3, 64, 'unet_256', norm='instance',gpu_ids=[0])
         #define_G(3, 3, 64, 'unet_128', 'instance', use_dropout=True)
         self.model_G_B =networks.define_G(3, 3, 64, 'unet_256', norm='instance', gpu_ids=[0])
@@ -153,9 +153,9 @@ class CycleGAN(nn.Module):
         check_G_B = self.model_D_B(self.fake_B)
         
         self.idt_A = self.model_G_A(self.real_B)
-        self.loss_identity_A = self.criterionIdt(self.idt_A, self.real_B) * 0.2
+        self.loss_identity_A = self.criterionIdt(self.idt_A, self.real_B) * self.idt
         self.idt_B = self.model_G_B(self.real_A)
-        self.loss_identity_B = self.criterionIdt(self.idt_B, self.real_A) * 0.2
+        self.loss_identity_B = self.criterionIdt(self.idt_B, self.real_A) * self.idt
         
         self.loss_G_B = self.criterionGAN(check_G_B,self.real_label.expand_as(check_G_B).to('cuda'))
         self.loss_cycle_A = self.criterionCycle(self.recreate_A, self.real_A) * self.lambda__

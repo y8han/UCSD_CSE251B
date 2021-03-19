@@ -78,18 +78,21 @@ class CycleGAN(nn.Module):
         self.lr = config_data['cycleGAN']['lr']
         self.criterionGAN = nn.MSELoss()
         self.criterionCycle = torch.nn.L1Loss()
+        self.criterionIdt = nn.L1Loss()
         if torch.cuda.is_available():
             self.criterionGAN = self.criterionGAN.to("cuda")
             self.criterionCycle = self.criterionCycle.to("cuda")
+            # used to make sure the color is on the same domain.
+            self.criterionIdt = self.criterionIdt.to("cuda")
         
         self.register_buffer('real_label', torch.tensor(1.0))
         self.register_buffer('fake_label', torch.tensor(0.0))
         self.lambda__ = 10
         
         
-        self.model_G_A = networks.define_G(3, 3, 64, 'unet_128', norm='instance',gpu_ids=[0])
+        self.model_G_A = networks.define_G(3, 3, 64, 'unet_256', norm='instance',gpu_ids=[0])
         #define_G(3, 3, 64, 'unet_128', 'instance', use_dropout=True)
-        self.model_G_B =networks.define_G(3, 3, 64, 'unet_128', norm='instance', gpu_ids=[0])
+        self.model_G_B =networks.define_G(3, 3, 64, 'unet_256', norm='instance', gpu_ids=[0])
         
         self.model_D_A = networks.define_D(3, 64, 'basic', 3, gpu_ids=[0])
         self.model_D_B = networks.define_D(3, 64, 'basic', 3, gpu_ids=[0])
@@ -148,10 +151,16 @@ class CycleGAN(nn.Module):
         
         self.loss_G_A = self.criterionGAN(check_G_A,self.real_label.expand_as(check_G_A).to('cuda'))
         check_G_B = self.model_D_B(self.fake_B)
+        
+        self.idt_A = self.model_G_A(self.real_B)
+        self.loss_identity_A = self.criterionIdt(self.idt_A, self.real_B) * 0.2
+        self.idt_B = self.model_G_B(self.real_A)
+        self.loss_identity_B = self.criterionIdt(self.idt_B, self.real_A) * 0.2
+        
         self.loss_G_B = self.criterionGAN(check_G_B,self.real_label.expand_as(check_G_B).to('cuda'))
         self.loss_cycle_A = self.criterionCycle(self.recreate_A, self.real_A) * self.lambda__
         self.loss_cycle_B = self.criterionCycle(self.recreate_B, self.real_B) * self.lambda__
-        self.loss_G = self.loss_cycle_A + self.loss_cycle_B + self.loss_G_A + self.loss_G_B
+        self.loss_G = self.loss_cycle_A + self.loss_cycle_B + self.loss_G_A + self.loss_G_B + self.loss_identity_A + self.loss_identity_B
         self.loss_G.backward()
     def update(self, input_image):
         self.forward(input_image)

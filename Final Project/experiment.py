@@ -67,8 +67,7 @@ class Experiment(object):
             start_time = datetime.now()
             print(start_time)
             self.__current_epoch = epoch
-            if epoch >= 100:
-                self.__model.idt = 0.001
+            self.__model.idt = 0.5
             train_loss = self.__train()
             #val_loss = self.__val()
             #self.__record_stats(train_loss, val_loss)

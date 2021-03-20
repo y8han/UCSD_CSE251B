@@ -63,7 +63,7 @@ class Experiment(object):
             self.__model.idt = 0.5
             train_loss = self.__train()
             self.__record_stats(train_loss)
-            if (epoch%1 == 0):
+            if (epoch%20 == 0):
                 self.__save_model(epoch)
                 
         self.plot_stats()

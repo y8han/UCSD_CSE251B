@@ -11,9 +11,8 @@ import torch.utils.data as data
 import itertools
 #from constants import *
 from file_utils import read_file_in_dir
-#from generator import define_G
-#from discriminator import define_D
-import networks
+from generator import define_G
+from discriminator import define_D
 import random
 import numpy as np
 
@@ -91,12 +90,12 @@ class CycleGAN(nn.Module):
         self.lambda__ = 10
         
         self.idt = 0.2
-        self.model_G_A = networks.define_G(3, 3, 64, 'unet_128', norm='instance',gpu_ids=[0])
+        self.model_G_A = define_G(3, 3, 64, 'unet_128', norm='instance')
         #define_G(3, 3, 64, 'unet_128', 'instance', use_dropout=True)
-        self.model_G_B =networks.define_G(3, 3, 64, 'unet_128', norm='instance', gpu_ids=[0])
+        self.model_G_B =define_G(3, 3, 64, 'unet_128', norm='instance')
         
-        self.model_D_A = networks.define_D(3, 64, 'basic', 3, gpu_ids=[0])
-        self.model_D_B = networks.define_D(3, 64, 'basic', 3, gpu_ids=[0])
+        self.model_D_A = define_D(3, 64, 3)
+        self.model_D_B = define_D(3, 64, 3)
         self.fake_A_pool = ImagePool(50)
         self.fake_B_pool = ImagePool(50)
         

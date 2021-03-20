@@ -20,34 +20,26 @@ import functools
 # custom weights initialization called on netG and netD
 def weights_init(m):
     classname = m.__class__.__name__
-    if classname.find('Conv') != -1 or classname.find('Linear') != -1):
+    if classname.find('Conv') != -1:
         m.weight.data.normal_(0.0, 0.02)
-    elif classname.find('BatchNorm2d') != -1 or  classname.find('InstanceNorm2d') != -1 or classname.find('LayerNorm') != -1
+    elif classname.find('BatchNorm2d') != -1 or  classname.find('InstanceNorm2d') != -1 or classname.find('LayerNorm') != -1:
         m.weight.data.normal_(1.0, 0.02)
-        m.bias.data.constant_(0)
-
-
-# In[ ]:
-
-
-def get_norm_layer(norm_type='instance'):
-    if norm_type == 'batch': # For BatchNorm, we use learnable affine parameters and track running statistics (mean/stddev).
-        norm_layer = functools.partial(nn.BatchNorm2d, affine=True, track_running_stats=True)
-    elif norm_type == 'instance': # For InstanceNorm, we do not use learnable affine parameters. We do not track running statistics.
-        norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
-    elif norm_type == 'layer': 
-        norm_layer = functools.partial(nn.LayerNorm, affine=False, track_running_stats=False)
-    else:
-        raise NotImplementedError('normalization layer [%s] is not found' % norm_type)
-    return norm_layer
-
+        m.bias.data.fill_(0)
 
 # In[ ]:
 
 
 def define_G(input_nc, output_nc, ngf, which_model_netG, norm, use_dropout=False):
     netG = None
-    norm_layer = get_norm_layer(norm_type=norm)
+    norm_layer = None
+    if norm == 'batch':
+        norm_layer = nn.BatchNorm2d
+    elif norm == 'layer':
+        norm_layer = nn.LayerNorm
+    elif norm == 'instance':
+        norm_layer = nn.InstanceNorm2d
+    else:
+        print('normalization layer [%s] is not found' % norm)
 
     if which_model_netG == 'resnet_9blocks':
         netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer, use_dropout=use_dropout, n_blocks=9)
@@ -59,11 +51,10 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm, use_dropout=False
         netG = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer, use_dropout=use_dropout)
     else:
         print('Generator model name [%s] is not recognized' % which_model_netG)
-    
-    netG.cuda()
+    if torch.cuda.is_available():
+        netG = netG.to("cuda")
     netG.apply(weights_init)
     return netG
-
 
 # In[ ]:
 
@@ -163,75 +154,74 @@ class ResnetBlock(nn.Module):
 # In[ ]:
 
 
+#our unet generator
 class UnetGenerator(nn.Module):
-    def __init__(self, input_nc, output_nc, num_downs, ngf=64, 
-                 norm_layer=nn.InstanceNorm2d, use_dropout=False):
+    def __init__(self, input_nc, output_nc, num_downs, ngf=64,
+                 norm_layer=nn.BatchNorm2d, use_dropout=False):
         super(UnetGenerator, self).__init__()
-        
+
+        # currently support only input_nc == output_nc
+        assert (input_nc == output_nc)
+
         # construct unet structure
-        unet = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer
-        for i in range(num_downs - 5):          # add intermediate layers with ngf * 8 filters
-            unet = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet, norm_layer=norm_layer, use_dropout=use_dropout)
-        # gradually reduce the number of filters from ngf * 8 to ngf
-        unet = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet, norm_layer=norm_layer)
-        unet = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet, norm_layer=norm_layer)
-        unet = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet, norm_layer=norm_layer)
-        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet, outermost=True, norm_layer=norm_layer)  # add the outermost layer
+        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, innermost=True)
+        for i in range(num_downs - 5):
+            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, unet_block, use_dropout=use_dropout)
+        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, unet_block)
+        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, unet_block)
+        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, unet_block)
+        unet_block = UnetSkipConnectionBlock(output_nc, ngf, unet_block, outermost=True)
+
+        self.model = unet_block
 
     def forward(self, input):
         return self.model(input)
+
     
 class UnetSkipConnectionBlock(nn.Module):
-    def __init__(self, outer_nc, inner_nc, input_nc=None,
-                 submodule=None, outermost=False, innermost=False, norm_layer=nn.InstanceNorm2d, use_dropout=False):
+    def __init__(self, outer_nc, inner_nc,
+                 submodule=None, outermost=False, innermost=False, use_dropout=False):
         super(UnetSkipConnectionBlock, self).__init__()
         self.outermost = outermost
-        
-        if type(norm_layer) == functools.partial:
-            use_bias = norm_layer.func == nn.InstanceNorm2d
-        else:
-            use_bias = norm_layer == nn.InstanceNorm2d
-        if input_nc is None:
-            input_nc = outer_nc
-            
-        en_conv = nn.Conv2d(input_nc, inner_nc, kernel_size=4,
-                             stride=2, padding=1, bias=use_bias)
-        en_relu = nn.LeakyReLU(0.2, True)
-        en_norm = norm_layer(inner_nc)
-        de_relu = nn.ReLU(True)
-        de_norm = norm_layer(outer_nc)
+
+        downconv = nn.Conv2d(outer_nc, inner_nc, kernel_size=4,
+                             stride=2, padding=1)
+        downrelu = nn.LeakyReLU(0.2, True)
+        downnorm = nn.BatchNorm2d(inner_nc)
+        uprelu = nn.ReLU(True)
+        upnorm = nn.BatchNorm2d(outer_nc)
 
         if innermost:
-            de_conv = nn.ConvTranspose2d(inner_nc, outer_nc,
-                                        kernel_size=4, stride=2,
-                                        padding=1, bias=use_bias)
-            encoder = [en_relu, en_conv]
-            decoder = [de_relu, de_conv, de_norm]
-            model = encoder + decoder
-        elif outermost:
-            de_conv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
+            upconv = nn.ConvTranspose2d(inner_nc, outer_nc,
                                         kernel_size=4, stride=2,
                                         padding=1)
-            encoder = [en_conv]
-            decoder = [de_relu, de_conv, nn.Tanh()]
-            model = encoder + [submodule] + decoder
-        else:
-            de_conv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
+            down = [downrelu, downconv]
+            up = [uprelu, upconv, upnorm]
+            model = down + up
+        elif outermost:
+            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
                                         kernel_size=4, stride=2,
-                                        padding=1, bias=use_bias)
-            encoder = [en_relu, en_conv, en_norm]
-            decoder = [de_relu, de_conv, de_norm]
+                                        padding=1)
+            down = [downconv]
+            up = [uprelu, upconv, nn.Tanh()]
+            model = down + [submodule] + up
+        else:
+            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
+                                        kernel_size=4, stride=2,
+                                        padding=1)
+            down = [downrelu, downconv, downnorm]
+            up = [uprelu, upconv, upnorm]
 
             if use_dropout:
-                model = encoder + [submodule] + decoder + [nn.Dropout(0.5)]
+                model = down + [submodule] + up + [nn.Dropout(0.5)]
             else:
-                model = encoder + [submodule] + decoder
+                model = down + [submodule] + up
 
         self.model = nn.Sequential(*model)
 
     def forward(self, x):
         if self.outermost:
             return self.model(x)
-        else:   # add skip connections
-            return torch.cat([x, self.model(x)], 1)
+        else:
+            return torch.cat([self.model(x), x], 1)
 

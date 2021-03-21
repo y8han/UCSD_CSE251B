@@ -9,16 +9,16 @@ import torch.nn as nn
 from torchvision import models
 import torch.utils.data as data
 import itertools
-#from constants import *
 from file_utils import read_file_in_dir
 from generator import define_G
 from discriminator import define_D
 import random
 import numpy as np
 
-
 # In[2]:
-
+# This Image Pool helper method is copied directly fom the origial CycleGAN paper
+# ImagePool is not a critical method therefore we choose to use it directly to reduce the possibility of bug
+# and to focus on the main part of the project
 
 class ImagePool():
     """This class implements an image buffer that stores previously generated images.
@@ -72,7 +72,7 @@ class ImagePool():
 
 
 class CycleGAN(nn.Module):
-    
+
     def __init__(self, config_data):
         super().__init__()
         self.lr = config_data['cycleGAN']['lr']
@@ -84,37 +84,37 @@ class CycleGAN(nn.Module):
             self.criterionCycle = self.criterionCycle.to("cuda")
             # used to make sure the color is on the same domain.
             self.criterionIdt = self.criterionIdt.to("cuda")
-        
+
         self.register_buffer('real_label', torch.tensor(1.0))
         self.register_buffer('fake_label', torch.tensor(0.0))
         self.lambda__ = 10
-        
+
         self.idt = 0.2
         self.model_G_A = define_G(3, 3, 64, 'unet_128', norm='instance')
         #define_G(3, 3, 64, 'unet_128', 'instance', use_dropout=True)
         self.model_G_B =define_G(3, 3, 64, 'unet_128', norm='instance')
-        
+
         self.model_D_A = define_D(3, 64, 3)
         self.model_D_B = define_D(3, 64, 3)
         self.fake_A_pool = ImagePool(50)
         self.fake_B_pool = ImagePool(50)
-        
+
         # changes needed
         self.optimizerG = torch.optim.Adam(itertools.chain(self.model_G_A.parameters(), self.model_G_B.parameters()), lr=self.lr, betas = (0.5, 0.99))
         self.optimizerD = torch.optim.Adam(itertools.chain(self.model_D_A.parameters(), self.model_D_B.parameters()), lr=self.lr, betas = (0.5, 0.99))
         self.optimizer = []
         self.optimizer.append(self.optimizerG)
         self.optimizer.append(self.optimizerD)
-    
+
     def forward(self, input_image):
         '''G_A is generating A from B and G_B is generating B from A'''
         self.real_A = input_image['A']
         self.real_B = input_image['B']
-        
+
         if torch.cuda.is_available():
             self.real_A = self.real_A.to("cuda")
             self.real_B = self.real_B.to("cuda")
-        
+
         #G_A(B)
         self.fake_A = self.model_G_A(self.real_B)
         #G_B(A)
@@ -142,15 +142,15 @@ class CycleGAN(nn.Module):
         self.loss_D_B = self.basic_D_backward(self.model_D_B, self.real_B, fake_B_POOL)
     def backward_G(self):
         check_G_A = self.model_D_A(self.fake_A)
-        
+
         self.loss_G_A = self.criterionGAN(check_G_A,self.real_label.expand_as(check_G_A).to('cuda'))
         check_G_B = self.model_D_B(self.fake_B)
-        
+
         self.idt_A = self.model_G_A(self.real_B)
         self.loss_identity_A = self.criterionIdt(self.idt_A, self.real_B) * self.idt
         self.idt_B = self.model_G_B(self.real_A)
         self.loss_identity_B = self.criterionIdt(self.idt_B, self.real_A) * self.idt
-        
+
         self.loss_G_B = self.criterionGAN(check_G_B,self.real_label.expand_as(check_G_B).to('cuda'))
         self.loss_cycle_A = self.criterionCycle(self.recreate_A, self.real_A) * self.lambda__
         self.loss_cycle_B = self.criterionCycle(self.recreate_B, self.real_B) * self.lambda__
@@ -167,16 +167,16 @@ class CycleGAN(nn.Module):
         self.D_A_backward()
         self.D_B_backward()
         self.optimizerD.step()
-        return np.array([self.loss_D_A.data.cpu().float(), self.loss_D_B.data.cpu().float(), self.loss_G_A.data.cpu().float(), 
+        return np.array([self.loss_D_A.data.cpu().float(), self.loss_D_B.data.cpu().float(), self.loss_G_A.data.cpu().float(),
                          self.loss_G_B.data.cpu().float(), self.loss_cycle_A.data.cpu().float(), self.loss_cycle_B.data.cpu().float()])
-        
+
     def set_model_grad(self, nets, requires):
         for net in nets:
             if net is not None:
                 for para in net.parameters():
                     para.require_grad = requires
-        
-        
+
+
 def get_model(config_data):
     return CycleGAN(config_data)
 
@@ -200,7 +200,3 @@ def get_model(config_data):
 
 
 # In[ ]:
-
-
-
-
